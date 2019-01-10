@@ -1,0 +1,4 @@
+﻿  main.cpp
+d:\github\cs32\p1\p1\main.cpp(7): warning C4101: 'a': unreferenced local variable
+d:\github\cs32\p1\p1\main.cpp(15): warning C4101: 'c': unreferenced local variable
+  P1.vcxproj -> D:\GitHub\CS32\P1\Debug\P1.exe
