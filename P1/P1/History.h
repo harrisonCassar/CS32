@@ -2,6 +2,8 @@
 
 #define HISTORY_H
 
+#include "globals.h"
+
 class Arena;
 
 class History
