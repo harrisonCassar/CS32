@@ -6,7 +6,7 @@
 
 using namespace std;
 
-Arena::Arena(int nRows, int nCols)
+Arena::Arena(int nRows, int nCols) : m_history(nRows,nCols)
 {
 	if (nRows <= 0 || nCols <= 0 || nRows > MAXROWS || nCols > MAXCOLS)
 	{

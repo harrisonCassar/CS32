@@ -11,7 +11,9 @@ public:
 	bool record(int r, int c);
 	void display() const;
 private:
-	Arena* m_arena;
+	int     m_rows;
+	int     m_cols;
+	int		m_deaths[MAXROWS][MAXCOLS];
 };
 
 #endif

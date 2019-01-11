@@ -86,7 +86,9 @@ void Game::play()
 				cout << "Press enter to continue.";
 				
 				cin.ignore(10000, '\n');
-				continue; //FIX THISSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
+
+				m_arena->display();
+				continue;
 			}
 		}
 		m_arena->moveZombies();
