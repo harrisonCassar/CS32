@@ -1,2 +1,8 @@
-﻿  main.cpp
+﻿  Arena.cpp
+  Game.cpp
+  History.cpp
+  main.cpp
+  Player.cpp
+  Zombie.cpp
+  Generating Code...
   P1.vcxproj -> D:\GitHub\CS32\P1\Debug\P1.exe
