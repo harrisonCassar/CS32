@@ -13,7 +13,7 @@ public:
 private:
 	int     m_rows;
 	int     m_cols;
-	int		m_deaths[MAXROWS][MAXCOLS];
+	char	m_deaths[MAXROWS][MAXCOLS];
 };
 
 #endif

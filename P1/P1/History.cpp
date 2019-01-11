@@ -14,18 +14,20 @@ History::History(int nRows, int nCols)
 	{
 		for (int j = 0; j < MAXCOLS; j++)
 		{
-			m_deaths[i][j] = 0;
+			m_deaths[i][j] = '.';
 		}
 	}
 }
 
 bool History::record(int r, int c)
 {
-	if (r <= 0 || c <= 0 || r > m_rows || c > m_cols)
+	if (r < 1 || c < 1 || r > m_rows || c > m_cols)
 		return false;
-
-	if (m_deaths[r][c] < 26)
-		m_deaths[r][c]++;
+	
+	if (m_deaths[r-1][c-1] == '.')
+		m_deaths[r-1][c-1] = 'A';
+	else if (m_deaths[r-1][c-1] < 'Z')
+		m_deaths[r-1][c-1]++;
 
 	return true;
 }
@@ -42,10 +44,7 @@ void History::display() const
 	{
 		for (c = 0; c < m_cols; c++)
 		{
-			if (m_deaths[r][c] == 0)
-				cout << ".";
-			else
-				cout << ('A' + (m_deaths[r][c] - 1));
+			cout << m_deaths[r][c];
 		}
 
 		cout << endl;
