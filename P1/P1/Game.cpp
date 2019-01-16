@@ -4,6 +4,7 @@
 #include "Game.h"
 #include "Arena.h"
 #include "Player.h"
+#include "globals.h"
 
 using namespace std;
 
