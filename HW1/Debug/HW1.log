@@ -1,0 +1,4 @@
+﻿  Set.cpp
+d:\github\cs32\hw1\set.cpp(49): error C2065: 'elements': undeclared identifier
+d:\github\cs32\hw1\set.cpp(49): error C2059: syntax error: ')'
+d:\github\cs32\hw1\set.cpp(53): error C2065: 'elements': undeclared identifier

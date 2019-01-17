@@ -46,13 +46,13 @@ bool Set::insert(const ItemType& value)
 	//shift all values of set to the right, making room for new value to be inserted
 	for (int j = size(); j != index; j--)
 	{
-		elements[j] = elements[j - 1)];
+		m_elements[j] = m_elements[j - 1];
 	}
 
 	//set value to its properly sorted position
-	elements[index] = value;
+	m_elements[index] = value;
 
-	//increment the total size of the set
+	//increment set's total size
 	m_size++;
 
 	return true;
@@ -60,14 +60,34 @@ bool Set::insert(const ItemType& value)
 
 bool Set::erase(const ItemType& value)
 {
-	if (!contains(value))
+	//counting variable to track current iterating position
+	int index;
+
+	//iterate through array until finding match with value (break condition) or until end of set
+	for (index = 0; index < size(); index++)
+	{
+		if (value == m_elements[index])
+			break;
+	}
+
+	//an index matching the size indicates no matches were found (do not modify, and return false)
+	if (index == size())
 		return false;
 
+	//overwrite next element value into previous element value for entire length of set
+	for (int i = index; i < size()-1; i++)
+	{
+		m_elements[i] = m_elements[i + 1];
+	}
+
+	//decrement set's total size (this additionally 
+	m_size--;
 
 }
 
 bool Set::contains(const ItemType& value) const
 {
+	//iterate through set, returning true if finding a match to the inputted value
 	for (int i = 0; i < size(); i++)
 	{
 		if (value == m_elements[i])
