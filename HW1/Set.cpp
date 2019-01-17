@@ -111,5 +111,12 @@ bool Set::get(int i, ItemType& value) const
 
 void Set::swap(Set& other)
 {
+	//set this set's new size to other set's size
+	m_size = other.m_size;
 
+	//iterate through other set, copying over values to this set in the process
+	for (int i = 0; i < m_size; i++)
+	{
+		m_elements[i] = other.m_elements[i];
+	}
 }
