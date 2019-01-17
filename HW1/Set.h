@@ -40,6 +40,9 @@ public:
 	void swap(Set& other);
 	// Exchange the contents of this set with the other one.
 
+	void dump() const;
+	// Prints the values of all elements currently in the set to cerr.
+
 private:
 	ItemType m_elements[DEFAULT_MAX_ITEMS];
 	int m_size;

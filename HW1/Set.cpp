@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "Set.h"
 
 Set::Set()
@@ -118,5 +120,14 @@ void Set::swap(Set& other)
 	for (int i = 0; i < m_size; i++)
 	{
 		m_elements[i] = other.m_elements[i];
+	}
+}
+
+void Set::dump() const
+{
+	//iterate through set, printing all values
+	for (int i = 0; i < size(); i++)
+	{
+		std::cerr << m_elements[i] << std::endl;
 	}
 }
