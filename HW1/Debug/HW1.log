@@ -1,4 +1,7 @@
 ﻿  Set.cpp
-d:\github\cs32\hw1\set.cpp(49): error C2065: 'elements': undeclared identifier
-d:\github\cs32\hw1\set.cpp(49): error C2059: syntax error: ')'
-d:\github\cs32\hw1\set.cpp(53): error C2065: 'elements': undeclared identifier
+  SSNSet.cpp
+  testSet.cpp
+  testSSNSet.cpp
+  Generating Code...
+d:\github\cs32\hw1\set.cpp(88): warning C4715: 'Set::erase': not all control paths return a value
+  HW1.vcxproj -> D:\GitHub\CS32\HW1\Debug\HW1.exe
