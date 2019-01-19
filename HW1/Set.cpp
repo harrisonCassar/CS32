@@ -113,14 +113,27 @@ bool Set::get(int i, ItemType& value) const
 
 void Set::swap(Set& other)
 {
-	//set this set's new size to other set's size
-	m_size = other.m_size;
+	ItemType temp;
+	int threshold;
 
-	//iterate through other set, copying over values to this set in the process
-	for (int i = 0; i < m_size; i++)
+	//find highest size and record it (used for knowing when to stop swapping values)
+	if (m_size >= other.m_size)
+		threshold = m_size;
+	else
+		threshold = other.m_size;
+
+	//iterate through sets, swapping each value
+	for (int i = 0; i < threshold; i++)
 	{
+		temp = m_elements[i];
 		m_elements[i] = other.m_elements[i];
+		m_elements[i] = temp;
 	}
+
+	//switch the sizes of each set after swapping all values within the sizes
+	int tempsize = other.m_size;
+	other.m_size = m_size;
+	m_size = tempsize;
 }
 
 void Set::dump() const
