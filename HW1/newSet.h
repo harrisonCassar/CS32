@@ -13,7 +13,13 @@ class Set
 public:
 	Set();         // Create an empty set (i.e., one with no items).
 
-	Set(int maxSize);
+	Set(int maxSize); // Create a set with enough space for indicated items.
+
+	Set(const Set& src); // Copy Constructor
+
+	~Set(); // Destructor
+
+	Set& operator=(const Set& src); // Assignment Operator
 
 	bool empty() const;  // Return true if the set is empty, otherwise false.
 
@@ -46,8 +52,9 @@ public:
 	// Prints the values of all elements currently in the set to cerr.
 
 private:
-	ItemType m_elements[DEFAULT_MAX_ITEMS];
+	ItemType* m_elements;
 	int m_size;
+	int m_maxSize;
 };
 
 #endif

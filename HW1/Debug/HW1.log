@@ -1,7 +1,2 @@
-﻿  Set.cpp
-  SSNSet.cpp
-  testSet.cpp
-  testSSNSet.cpp
-  Generating Code...
-d:\github\cs32\hw1\set.cpp(88): warning C4715: 'Set::erase': not all control paths return a value
+﻿  testSSNSet.cpp
   HW1.vcxproj -> D:\GitHub\CS32\HW1\Debug\HW1.exe

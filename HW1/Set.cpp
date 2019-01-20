@@ -85,6 +85,7 @@ bool Set::erase(const ItemType& value)
 	//decrement set's total size (this additionally 
 	m_size--;
 
+	return true;
 }
 
 bool Set::contains(const ItemType& value) const

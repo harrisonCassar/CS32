@@ -126,6 +126,7 @@
     <ClCompile Include="newSet.cpp" />
     <ClCompile Include="Set.cpp" />
     <ClCompile Include="SSNSet.cpp" />
+    <ClCompile Include="tempSetFile.cpp" />
     <ClCompile Include="testnewSet.cpp" />
     <ClCompile Include="testSet.cpp" />
     <ClCompile Include="testSSNSet.cpp" />

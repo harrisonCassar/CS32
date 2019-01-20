@@ -5,11 +5,61 @@
 Set::Set()
 {
 	m_size = 0;
+	m_maxSize = DEFAULT_MAX_ITEMS;
+	m_elements = new ItemType[DEFAULT_MAX_ITEMS];
 }
 
 Set::Set(int maxSize)
 {
 	m_size = 0;
+	m_maxSize = maxSize;
+
+	if (maxSize > 0)
+		m_elements = new ItemType[maxSize];
+	
+	if (maxSize == 0)
+		m_elements = nullptr;
+
+	if (maxSize < 0)
+		exit(1);
+}
+
+Set::Set(const Set& src)
+{
+	m_size = src.m_size;
+	m_maxSize = src.m_maxSize;
+
+	m_elements = new ItemType[src.m_maxSize];
+
+	for (int i = 0; i < m_size; i++)
+	{
+		m_elements[i] = src.m_elements[i];
+	}
+}
+
+Set::~Set()
+{
+	delete[] m_elements;
+}
+
+Set& Set::operator=(const Set& src)
+{
+	if (this == &src)
+		return *this;
+
+	delete[] m_elements;
+
+	m_elements = new ItemType[src.m_maxSize];
+
+	m_size = src.m_size;
+	m_maxSize = src.m_maxSize;
+
+	for (int i = 0; i < m_size; i++)
+	{
+		m_elements[i] = src.m_elements[i];
+	}
+
+	return *this;
 }
 
 bool Set::empty() const
@@ -28,7 +78,7 @@ int Set::size() const
 bool Set::insert(const ItemType& value)
 {
 	//check for already present value or full set capacity
-	if (contains(value) || size() >= DEFAULT_MAX_ITEMS)
+	if (contains(value) || size() >= m_maxSize)
 		return false;
 
 	//temp ItemType variable that allows for compatibility with the class Set's "get()" member function
@@ -53,11 +103,11 @@ bool Set::insert(const ItemType& value)
 	//shift all values of set to the right, making room for new value to be inserted
 	for (int j = size(); j != index; j--)
 	{
-		m_elements[j] = m_elements[j - 1];
+		*(m_elements+j) = *(m_elements+(j - 1));
 	}
 
 	//set value to its properly sorted position
-	m_elements[index] = value;
+	*(m_elements+index) = value;
 
 	//increment set's total size
 	m_size++;
@@ -73,7 +123,7 @@ bool Set::erase(const ItemType& value)
 	//iterate through array until finding match with value (break condition) or until end of set
 	for (index = 0; index < size(); index++)
 	{
-		if (value == m_elements[index])
+		if (value == *(m_elements + index))
 			break;
 	}
 
@@ -84,12 +134,13 @@ bool Set::erase(const ItemType& value)
 	//overwrite next element value into previous element value for entire length of set
 	for (int i = index; i < size() - 1; i++)
 	{
-		m_elements[i] = m_elements[i + 1];
+		*(m_elements + i) = *(m_elements + i + 1);
 	}
 
 	//decrement set's total size (this additionally 
 	m_size--;
 
+	return true;
 }
 
 bool Set::contains(const ItemType& value) const
@@ -97,7 +148,7 @@ bool Set::contains(const ItemType& value) const
 	//iterate through set, returning true if finding a match to the inputted value
 	for (int i = 0; i < size(); i++)
 	{
-		if (value == m_elements[i])
+		if (value == *(m_elements + i))
 			return true;
 	}
 
@@ -111,21 +162,16 @@ bool Set::get(int i, ItemType& value) const
 		return false;
 
 	//since set is already sorted from least to greatest, can access value of interest using i as the index of the array
-	value = m_elements[i];
+	value = *(m_elements + i);
 
 	return true;
 }
 
 void Set::swap(Set& other)
 {
-	//set this set's new size to other set's size
-	m_size = other.m_size;
-
-	//iterate through other set, copying over values to this set in the process
-	for (int i = 0; i < m_size; i++)
-	{
-		m_elements[i] = other.m_elements[i];
-	}
+	Set temp = *this;
+	*this = other;
+	other = temp;
 }
 
 void Set::dump() const
