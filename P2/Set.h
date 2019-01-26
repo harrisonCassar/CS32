@@ -63,6 +63,6 @@ private:
 
 void unite(const Set& s1, const Set& s2, Set& result);
 
-void subtract(const Set& s1, const Set& s2, Set& result)l;
+void subtract(const Set& s1, const Set& s2, Set& result);
 
 #endif

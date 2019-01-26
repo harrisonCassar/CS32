@@ -287,7 +287,7 @@ void unite(const Set& s1, const Set& s2, Set& result)
 	ItemType tempValue;
 
 	//traverse through s2 set, inserting values
-	for (int i = 0; i < s2.size; i++)
+	for (int i = 0; i < s2.size(); i++)
 	{
 		s2.get(i, tempValue);
 		result.insert(tempValue);
@@ -303,7 +303,7 @@ void subtract(const Set& s1, const Set& s2, Set& result)
 	ItemType tempValue;
 
 	//traverse through s2 set, inserting values
-	for (int i = 0; i < s2.size; i++)
+	for (int i = 0; i < s2.size(); i++)
 	{
 		s2.get(i, tempValue);
 		result.erase(tempValue);
