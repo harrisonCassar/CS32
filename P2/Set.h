@@ -4,8 +4,6 @@
 
 #include <string>
 
-const int DEFAULT_MAX_ITEMS = 250;
-
 using ItemType = std::string;
 
 class Set
@@ -13,9 +11,9 @@ class Set
 public:
 	Set();         // Default constructor: creates an empty set (i.e., one with no items).
 
-	~Set(); 		// Destructor
-
 	Set(const Set& src);	// Copy constructor
+
+	~Set(); 		// Destructor
 
 	Set& operator=(const Set& src); //Assignment operator 
 
@@ -50,10 +48,27 @@ public:
 	// Prints the values of all elements currently in the set to cerr.
 
 private:
-	ItemType m_elements[DEFAULT_MAX_ITEMS];
+	struct Node
+	{
+		ItemType value;
+		Node* next;
+		Node* prev;
+	};
+
+	Node* m_head;
+	Node* m_tail;
+
 	int m_size;
 };
 
+void unite(const Set& s1, const Set& s2, Set& result)
+{
 
+}
+
+void subtract(const Set& s1, const Set& s2, Set& result)
+{
+
+}
 
 #endif
