@@ -4,6 +4,7 @@
 
 Set::Set()
 {
+	m_head = m_tail = nullptr;
 	m_size = 0;
 }
 
@@ -13,18 +14,18 @@ Set::Set(const Set& src)
 		return;
 
 	//assign head and tail to the first new node
-	head = tail = new Node;
+	m_head = m_tail = new Node;
 
 	//declare temp variables
 	ItemType tempValue;
-	Node* tempPtr = head; //will point to new one being added
+	Node* tempPtr = m_head; //will point to new one being added
 
 	//get value of first Node in source
 	src.get(0,tempValue);
 
 	//properly assign first Node's members
-	head->value = tempValue;
-	head->prev = head->next = nullptr;
+	m_head->value = tempValue;
+	m_head->prev = m_head->next = nullptr;
 
 	for (int i = 1; i < src.size(); i++)
 	{
@@ -34,20 +35,44 @@ Set::Set(const Set& src)
 		//set new Node's members
 		src.get(i,tempValue);
 		tempPtr->value = tempValue;
-		tempPtr->prev = tail;
+		tempPtr->prev = m_tail;
 		tempPtr->next = nullptr;
 		
 		//update next pointer of the previously "last" Node
-		tail->next = tempPtr;
+		m_tail->next = tempPtr;
 
 		//update tail
-		tail = tempPtr;
+		m_tail = tempPtr;
 	}
+
+	//set final size
+	m_size = src.size();
 }
 
 Set::~Set()
 {
-	
+	if (size() == 0)
+		return;
+
+	if (size() == 1)
+	{
+		delete head;
+		return;
+	}
+
+	//temporary pointer for traversing linked list
+	Node* tempPtr = head->next;
+
+	//traverse linked list, deleting each Node
+	while (tempPtr->next != nullptr)
+	{
+		delete tempPtr->prev;
+		tempPtr = tempPtr->next;
+	}
+
+	//special steps taken for last Node to ensure delete is not called improperly
+	delete tempPtr->prev;
+	delete tempPtr;
 }
 
 bool Set::empty() const
