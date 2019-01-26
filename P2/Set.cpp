@@ -126,8 +126,26 @@ bool Set::insert(const ItemType& value)
 	}
 
 	//set value to its properly sorted position, with special cases at beginning and end
-	if (index = 0)
+	if (index == 0)
 	{
+		//check special case where adding to empty list
+		if (m_head == nullptr)
+		{
+			m_head = new Node;
+			m_head->prev = nullptr;
+			m_head->next = nullptr;
+			m_head->value = value;
+
+			//update tail
+			m_tail = m_head;
+
+			//update size
+			m_size++;
+
+			return true;
+		}
+
+		//properly reassign pointers with the addition of a new Node at the front of the list
 		tempPtr = m_head;
 		m_head = new Node;
 		m_head->prev = nullptr;
@@ -135,12 +153,16 @@ bool Set::insert(const ItemType& value)
 		tempPtr->prev = m_head;
 		m_head->value = value;
 
+		//update size
 		m_size++;
+
 		return true;
 	}
 
-	if (index = size())
+	//special case for inserting value at end of list
+	if (index == size())
 	{
+		//properly reassign pointers with the addition of a new Node at the end of the list
 		tempPtr = m_tail;
 		m_tail = new Node;
 		m_tail->prev = tempPtr;
@@ -148,7 +170,9 @@ bool Set::insert(const ItemType& value)
 		tempPtr->next = m_tail;
 		m_tail->value = value;
 
+		//update size
 		m_size++;
+
 		return true;
 	}
 
@@ -158,8 +182,7 @@ bool Set::insert(const ItemType& value)
 	{
 		tempPtr = tempPtr->next;
 	}
-
-
+	
 	//updates all affected pointers on existing preceding Node, new Node, and succeeding Node (and the value for the new Node)
 	tempPtr->prev->next = new Node;
 	tempPtr->prev->next->prev = tempPtr->prev;
@@ -175,6 +198,44 @@ bool Set::insert(const ItemType& value)
 
 bool Set::erase(const ItemType& value)
 {
+	//check for empty list
+	if (m_head == nullptr)
+		return false;
+
+	//special case check for deleting first item in list
+	if (m_head->value == value)
+	{
+		//temporary pointer for pointing to erase's target Node
+		Node* killPtr = m_head;
+
+		//special case for a one-Node linked list
+		if (m_head->next == nullptr)
+		{
+			delete killPtr;
+
+			//update head/tail pointers
+			m_head = nullptr;
+			m_tail = nullptr;
+
+			//update size
+			m_size--;
+
+			return true;
+		}
+
+		//update pointers of second Node in linked list
+		m_head->next->prev = nullptr;
+		m_head = m_head->next;
+		
+		//delete first Node
+		delete killPtr;
+
+		//update size
+		m_size--;
+
+		return true;
+	}
+
 	//temporary pointer for linked list traversal
 	Node* tempPtr = m_head;
 
@@ -190,6 +251,10 @@ bool Set::erase(const ItemType& value)
 	//if we broke out on the target value (meaning we found it)
 	if (tempPtr != nullptr)
 	{
+		//special case check for erasing last Node (for updating tail pointer)
+		if (tempPtr == m_tail)
+			m_tail = m_tail->prev;
+
 		Node* killPtr = tempPtr->next;
 		tempPtr->next = killPtr->next;
 		tempPtr->next->prev = tempPtr;
@@ -219,6 +284,8 @@ bool Set::contains(const ItemType& value) const
 	{
 		if (tempPtr->next != nullptr && tempPtr->next->value == value)
 			return true;
+
+		tempPtr = tempPtr->next;
 	}
 
 	return false;
