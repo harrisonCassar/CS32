@@ -21,7 +21,7 @@ Set::Set(const Set& src)
 	Node* tempPtr = m_head; //will point to new one being added
 
 	//get value of first Node in source
-	src.get(0,tempValue);
+	src.get(0, tempValue);
 
 	//properly assign first Node's members
 	m_head->value = tempValue;
@@ -33,11 +33,11 @@ Set::Set(const Set& src)
 		tempPtr = new Node;
 
 		//set new Node's members
-		src.get(i,tempValue);
+		src.get(i, tempValue);
 		tempPtr->value = tempValue;
 		tempPtr->prev = m_tail;
 		tempPtr->next = nullptr;
-		
+
 		//update next pointer of the previously "last" Node
 		m_tail->next = tempPtr;
 
@@ -75,12 +75,12 @@ Set::~Set()
 	delete tempPtr;
 }
 
-Set& operator=(const Set& src)
+Set& Set::operator=(const Set& src)
 {
 	if (this != &src)
 	{
 		Set temp(src);
-		this.swap(temp);
+		this->swap(temp);
 	}
 
 	return *this;
@@ -154,7 +154,7 @@ bool Set::insert(const ItemType& value)
 
 	tempPtr = m_head;
 
-	for (int i=0; i<index;i++)
+	for (int i = 0; i < index; i++)
 	{
 		tempPtr = tempPtr->next;
 	}
@@ -180,7 +180,7 @@ bool Set::erase(const ItemType& value)
 
 	//traverse through linked list until finding match with value (break condition) or until end of set
 	while (tempPtr != nullptr)
-	{	
+	{
 		if (tempPtr->next != nullptr && tempPtr->next->value == value)
 			break;
 
@@ -206,12 +206,12 @@ bool Set::erase(const ItemType& value)
 }
 
 bool Set::contains(const ItemType& value) const
-{	
+{
 	//begins temporary pointer at head for linked list traversal
 	Node* tempPtr = m_head;
 
 	//special check for value's presence in the first node of the linked list
-	if (tempPtr != nullPtr && tempPtr-> value == value)
+	if (tempPtr != nullptr && tempPtr->value == value)
 		return true;
 
 	//traverse linked list, returning true if value is found
@@ -262,7 +262,7 @@ void Set::swap(Set& other)
 	//switch the sizes of each set
 	tempSize = m_size;
 	m_size = other.m_size;
-	other.m_size = tempsize;
+	other.m_size = tempSize;
 }
 
 void Set::dump() const
@@ -279,18 +279,18 @@ void Set::dump() const
 }
 
 void unite(const Set& s1, const Set& s2, Set& result)
-{	
+{
 	//begin with result set having all values in s1
 	result = s1;
 
-	//temporary pointer for linked list traversal
-	Node* tempPtr = s2.m_head;
+	//temporary value for compatibility with Set's "get" member function
+	ItemType tempValue;
 
 	//traverse through s2 set, inserting values
-	while (tempPtr != nullptr)
+	for (int i = 0; i < s2.size; i++)
 	{
-		result.insert(tempPtr->value);
-		tempPtr = tempPtr->next;
+		s2.get(i, tempValue);
+		result.insert(tempValue);
 	}
 }
 
@@ -299,13 +299,13 @@ void subtract(const Set& s1, const Set& s2, Set& result)
 	//begin with result set having all values in s1
 	result = s1;
 
-	//temporary pointer for linked list traversal
-	Node* tempPtr = s2.m_head;
+	//temporary value for compatibility with Set's "get" member function
+	ItemType tempValue;
 
-	//traverse through s2 set, erasing present values
-	while (tempPtr != nullptr)
+	//traverse through s2 set, inserting values
+	for (int i = 0; i < s2.size; i++)
 	{
-		result.erase(tempPtr->value);
-		tempPtr = tempPtr->next;
+		s2.get(i, tempValue);
+		result.erase(tempValue);
 	}
 }
