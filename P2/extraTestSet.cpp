@@ -6,14 +6,22 @@ using namespace std;
 
 void test()
 {
-	Set ss;
-	assert(ss.insert("roti"));
+    Set ss;
+    cout << "1" << endl;
+    assert(ss.insert("roti"));
+    cout << "2" << endl;
     assert(ss.insert("pita"));
+    cout << "3" << endl;
     assert(ss.size() == 2);
+    cout << "4" << endl;
     assert(ss.contains("pita"));
+    cout << "5" << endl;
     ItemType x = "laobing";
-    assert(ss.get(0, x)  &&  x == "pita");
-    assert(ss.get(1, x)  &&  x == "roti");
+    cout << "6" << endl;
+    assert(ss.get(0, x) && x == "pita");
+    cout << "7" << endl;
+    assert(ss.get(1, x) && x == "roti");
+    cout << "8" << endl;
 }
 
 int main()
