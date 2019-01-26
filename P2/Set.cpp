@@ -56,12 +56,12 @@ Set::~Set()
 
 	if (size() == 1)
 	{
-		delete head;
+		delete m_head;
 		return;
 	}
 
 	//temporary pointer for traversing linked list
-	Node* tempPtr = head->next;
+	Node* tempPtr = m_head->next;
 
 	//traverse linked list, deleting each Node
 	while (tempPtr->next != nullptr)
@@ -73,6 +73,17 @@ Set::~Set()
 	//special steps taken for last Node to ensure delete is not called improperly
 	delete tempPtr->prev;
 	delete tempPtr;
+}
+
+Set& operator=(const Set& src)
+{
+	if (this != &src)
+	{
+		Set temp(src);
+		this.swap(temp);
+	}
+
+	return *this;
 }
 
 bool Set::empty() const
@@ -90,12 +101,13 @@ int Set::size() const
 
 bool Set::insert(const ItemType& value)
 {
-	//check for already present value or full set capacity
-	if (contains(value) || size() >= DEFAULT_MAX_ITEMS)
+	//check for already present value
+	if (contains(value))
 		return false;
 
-	//temp ItemType variable that allows for compatibility with the class Set's "get()" member function
-	ItemType temp;
+	//declare temp variables for compatibility with Set's other member functions
+	ItemType tempValue;
+	Node* tempPtr;
 
 	//counting variable to track current iterating position
 	int index;
@@ -104,23 +116,56 @@ bool Set::insert(const ItemType& value)
 	for (index = 0; index < size(); index++)
 	{
 		//set temp's value to the current element in the sorted set
-		get(index, temp);
+		get(index, tempValue);
 
 		//break condition: if temp is greater than inputted value, begin insertion immediately
-		if (value < temp)
+		if (value < tempValue)
 		{
 			break;
 		}
 	}
 
-	//shift all values of set to the right, making room for new value to be inserted
-	for (int j = size(); j != index; j--)
+	//set value to its properly sorted position, with special cases at beginning and end
+	if (index = 0)
 	{
-		m_elements[j] = m_elements[j - 1];
+		tempPtr = m_head;
+		m_head = new Node;
+		m_head->prev = nullptr;
+		m_head->next = tempPtr;
+		tempPtr->prev = m_head;
+		m_head->value = value;
+
+		m_size++;
+		return true;
 	}
 
-	//set value to its properly sorted position
-	m_elements[index] = value;
+	if (index = size())
+	{
+		tempPtr = m_tail;
+		m_tail = new Node;
+		m_tail->prev = tempPtr;
+		m_tail->next = nullptr;
+		tempPtr->next = m_tail;
+		m_tail->value = value;
+
+		m_size++;
+		return true;
+	}
+
+	tempPtr = m_head;
+
+	for (int i=0; i<index;i++)
+	{
+		tempPtr = tempPtr->next;
+	}
+
+
+	//updates all affected pointers on existing preceding Node, new Node, and succeeding Node (and the value for the new Node)
+	tempPtr->prev->next = new Node;
+	tempPtr->prev->next->prev = tempPtr->prev;
+	tempPtr->prev->next->next = tempPtr;
+	tempPtr->prev = tempPtr->prev->next;
+	tempPtr->prev->value = value;
 
 	//increment set's total size
 	m_size++;
@@ -130,38 +175,49 @@ bool Set::insert(const ItemType& value)
 
 bool Set::erase(const ItemType& value)
 {
-	//counting variable to track current iterating position
-	int index;
+	//temporary pointer for linked list traversal
+	Node* tempPtr = m_head;
 
-	//iterate through array until finding match with value (break condition) or until end of set
-	for (index = 0; index < size(); index++)
-	{
-		if (value == m_elements[index])
+	//traverse through linked list until finding match with value (break condition) or until end of set
+	while (tempPtr != nullptr)
+	{	
+		if (tempPtr->next != nullptr && tempPtr->next->value == value)
 			break;
+
+		tempPtr = tempPtr->next;
 	}
 
-	//an index matching the size indicates no matches were found (do not modify, and return false)
-	if (index == size())
+	//if we broke out on the target value (meaning we found it)
+	if (tempPtr != nullptr)
+	{
+		Node* killPtr = tempPtr->next;
+		tempPtr->next = killPtr->next;
+		tempPtr->next->prev = tempPtr;
+
+		delete killPtr;
+	}
+	else
 		return false;
 
-	//overwrite next element value into previous element value for entire length of set
-	for (int i = index; i < size()-1; i++)
-	{
-		m_elements[i] = m_elements[i + 1];
-	}
-
-	//decrement set's total size (this additionally 
+	//decrement set's total size
 	m_size--;
 
 	return true;
 }
 
 bool Set::contains(const ItemType& value) const
-{
-	//iterate through set, returning true if finding a match to the inputted value
-	for (int i = 0; i < size(); i++)
+{	
+	//begins temporary pointer at head for linked list traversal
+	Node* tempPtr = m_head;
+
+	//special check for value's presence in the first node of the linked list
+	if (tempPtr != nullPtr && tempPtr-> value == value)
+		return true;
+
+	//traverse linked list, returning true if value is found
+	while (tempPtr != nullptr)
 	{
-		if (value == m_elements[i])
+		if (tempPtr->next != nullptr && tempPtr->next->value == value)
 			return true;
 	}
 
@@ -174,42 +230,82 @@ bool Set::get(int i, ItemType& value) const
 	if (i < 0 || i >= size())
 		return false;
 
-	//since set is already sorted from least to greatest, can access value of interest using i as the index of the array
-	value = m_elements[i];
+	//temporary pointer for linked list traversal
+	Node* tempPtr = m_head;
+
+	//traverse linked list to designated node
+	for (int j = 0; j < i; j++)
+		tempPtr = tempPtr->next;
+
+	//since set is already sorted from least to greatest, can access value of interest using i as the number of Nodes "into" the linked list
+	value = tempPtr->value;
 
 	return true;
 }
 
 void Set::swap(Set& other)
 {
-	ItemType temp;
-	int threshold;
+	//temporary pointer for switching value of one head/tail pointer
+	Node* tempPtr;
+	int tempSize;
 
-	//find highest size and record it (used for knowing when to stop swapping values)
-	if (m_size >= other.m_size)
-		threshold = m_size;
-	else
-		threshold = other.m_size;
+	//switch head pointers
+	tempPtr = m_head;
+	m_head = other.m_head;
+	other.m_head = tempPtr;
 
-	//iterate through sets, swapping each value
-	for (int i = 0; i < threshold; i++)
-	{
-		temp = m_elements[i];
-		m_elements[i] = other.m_elements[i];
-		m_elements[i] = temp;
-	}
+	//switch tail pointers
+	tempPtr = m_tail;
+	m_tail = other.m_tail;
+	other.m_tail = tempPtr;
 
-	//switch the sizes of each set after swapping all values within the sizes
-	int tempsize = other.m_size;
-	other.m_size = m_size;
-	m_size = tempsize;
+	//switch the sizes of each set
+	tempSize = m_size;
+	m_size = other.m_size;
+	other.m_size = tempsize;
 }
 
 void Set::dump() const
 {
+	//temporary pointer for linked list traversal
+	Node* tempPtr = m_head;
+
 	//iterate through set, printing all values
-	for (int i = 0; i < size(); i++)
+	while (tempPtr != nullptr)
 	{
-		std::cerr << m_elements[i] << std::endl;
+		std::cerr << tempPtr->value << std::endl;
+		tempPtr = tempPtr->next;
+	}
+}
+
+void unite(const Set& s1, const Set& s2, Set& result)
+{	
+	//begin with result set having all values in s1
+	result = s1;
+
+	//temporary pointer for linked list traversal
+	Node* tempPtr = s2.m_head;
+
+	//traverse through s2 set, inserting values
+	while (tempPtr != nullptr)
+	{
+		result.insert(tempPtr->value);
+		tempPtr = tempPtr->next;
+	}
+}
+
+void subtract(const Set& s1, const Set& s2, Set& result)
+{
+	//begin with result set having all values in s1
+	result = s1;
+
+	//temporary pointer for linked list traversal
+	Node* tempPtr = s2.m_head;
+
+	//traverse through s2 set, erasing present values
+	while (tempPtr != nullptr)
+	{
+		result.erase(tempPtr->value);
+		tempPtr = tempPtr->next;
 	}
 }

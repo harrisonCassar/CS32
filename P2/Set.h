@@ -61,14 +61,8 @@ private:
 	int m_size;
 };
 
-void unite(const Set& s1, const Set& s2, Set& result)
-{
+void unite(const Set& s1, const Set& s2, Set& result);
 
-}
-
-void subtract(const Set& s1, const Set& s2, Set& result)
-{
-
-}
+void subtract(const Set& s1, const Set& s2, Set& result)l;
 
 #endif
