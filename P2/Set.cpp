@@ -7,6 +7,49 @@ Set::Set()
 	m_size = 0;
 }
 
+Set::Set(const Set& src)
+{
+	if (src.size() == 0)
+		return;
+
+	//assign head and tail to the first new node
+	head = tail = new Node;
+
+	//declare temp variables
+	ItemType tempValue;
+	Node* tempPtr = head; //will point to new one being added
+
+	//get value of first Node in source
+	src.get(0,tempValue);
+
+	//properly assign first Node's members
+	head->value = tempValue;
+	head->prev = head->next = nullptr;
+
+	for (int i = 1; i < src.size(); i++)
+	{
+		//create a Node to be added
+		tempPtr = new Node;
+
+		//set new Node's members
+		src.get(i,tempValue);
+		tempPtr->value = tempValue;
+		tempPtr->prev = tail;
+		tempPtr->next = nullptr;
+		
+		//update next pointer of the previously "last" Node
+		tail->next = tempPtr;
+
+		//update tail
+		tail = tempPtr;
+	}
+}
+
+Set::~Set()
+{
+	
+}
+
 bool Set::empty() const
 {
 	if (size() == 0)
