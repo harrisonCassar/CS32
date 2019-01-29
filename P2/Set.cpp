@@ -176,13 +176,14 @@ bool Set::insert(const ItemType& value)
 		return true;
 	}
 
+	//traversing to target sorted position
 	tempPtr = m_head;
 
 	for (int i = 0; i < index; i++)
 	{
 		tempPtr = tempPtr->next;
 	}
-	
+
 	//updates all affected pointers on existing preceding Node, new Node, and succeeding Node (and the value for the new Node)
 	tempPtr->prev->next = new Node;
 	tempPtr->prev->next->prev = tempPtr->prev;
@@ -226,7 +227,7 @@ bool Set::erase(const ItemType& value)
 		//update pointers of second Node in linked list
 		m_head->next->prev = nullptr;
 		m_head = m_head->next;
-		
+
 		//delete first Node
 		delete killPtr;
 
@@ -252,8 +253,14 @@ bool Set::erase(const ItemType& value)
 	if (tempPtr != nullptr)
 	{
 		//special case check for erasing last Node (for updating tail pointer)
-		if (tempPtr == m_tail)
+		if (tempPtr->next == m_tail)
+		{
 			m_tail = m_tail->prev;
+			delete tempPtr->next;
+			tempPtr->next = nullptr;
+			m_size--;
+			return true;
+		}
 
 		Node* killPtr = tempPtr->next;
 		tempPtr->next = killPtr->next;
