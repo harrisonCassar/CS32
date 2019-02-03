@@ -14,42 +14,146 @@ bool isValid(string infix); //checking syntax of inputted infix string
 int evaluate(string infix, const Set& trueValues, const Set& falseValues, string& postfix, bool& result)
 {
 	if (!isValid(infix))
-		return false;
+		return 1;
 
+	//removing space characters
+	for (int i = 0; i < infix.size(); i++)
+	{
+		if (infix[i] == ' ')
+		{
+			infix = infix.substr(0,i) + infix.substr(i+1);
+			i--;
+		}
+	}
+
+	//initialize postfix to empty
+	postfix = "";
 	
+	//initialize the operator stack to empty
+	stack<char> op;
 
+	//infix to postfix conversion step
+	for (int i = 0; i< infix.size(); i++)
+	{
+		switch (infix[i])
+		{
+			default:
+				postfix += infix[i];
+				break;
+			case '(':
+				op.push(infix[i]);
+				break;
+			case ')':
+				// pop stack until matching '('
+				while (op.top() != '(')
+				{
+					postfix += op.top();
+					op.pop();
+				}
+				op.pop(); //remove the '('
+				break;
+			case '&':
+			case '|':
+			case '!':
+				while (!op.empty() && op.top() != '(')
+				{
+					int precedenceInfix;
+					int precedenceTop;
+
+					if (infix[i] == '!')
+						precedenceInfix = 3;
+					else if (infix[i] == '&')
+						precedenceInfix = 2;
+					else if (infix[i] == '|')
+						precedenceInfix = 1;
+
+					if (op.top() == '!')
+						precedenceTop = 3;
+					else if (op.top() == '&')
+						precedenceTop = 2;
+					else if (op.top() == '|')
+						precedenceTop = 1;
+
+					if (precedenceInfix <= precedenceTop)
+					{
+						postfix += op.top();
+						op.pop();
+					}
+				}
+
+				op.push(infix[i]);
+				break;
+		}
+	}
+
+	while (!op.empty())
+	{
+		postfix += op.top();
+		op.pop();
+	}
+
+	//initialize the operator stack to empty
+	stack<bool> operand;
+
+	//evaluation of postfix expression
+	for (int i = 0; i < postfix.size(); i++)
+	{
+		if (isalpha(postfix[i]))
+		{
+			if (trueValues.contains(postfix[i]) && !falseValues.contains(postfix[i]))
+				operand.push(true);
+			else if (falseValues.contains(postfix[i]) && !trueValues.contains(postfix[i]))
+				operand.push(false);
+			else if (trueValues.contains(postfix[i]) && falseValues.contains(postfix[i]))
+				return 2;
+			else
+				return 3;
+
+		}
+		else
+		{
+			if (postfix[i] == '!')
+			{
+				bool temp = operand.top();
+				operand.pop();
+
+				operand.push(!temp);
+				continue;
+			}
+
+			bool operand2 = operand.top();
+			operand.pop();
+
+			bool operand1 = operand.top();
+			operand.pop();
+
+			if (postfix[i] == '&')
+				operand.push(operand1 && operand2);
+			else if (postfix[i] == '|')
+				operand.push(operand1 || operand2);
+		}
+	}
+
+	if (operand.size() != 1)
+		return 1;
+
+	result = operand.top();
+
+	return 0;
 }
-  // Evaluate a boolean expression
-  //   If infix is a syntactically valid infix boolean expression whose
-  //   only operands are single lower case letters (whether or not they
-  //   appear in the values sets), then postfix is set to the postfix
-  //   form of the expression.  If not, postfix might or might not be
-  //   changed, result is unchanged, and the function returns 1.
-  //
-  //   If infix is a syntactically valid infix boolean expression whose
-  //   only operands are single lower case letters:
-  //
-  //      If every operand letter in the expression appears in either
-  //      trueValues or falseValues but not both, then result is set to the
-  //      result of evaluating the expression (using for each letter in the
-  //      expression the value true if that letter appears in trueValues or
-  //      false if that letter appears in false values) and the function
-  //      returns 0.
-  //
-  //      Otherwise, result is unchanged and the value the function returns
-  //      depends on these two conditions:
-  //        at least one letter in the expression is in neither the
-  //            trueValues nor the falseValues sets; and
-  //        at least one letter in the expression is in both the
-  //            trueValues and the falseValues set.
-  //      If only the first condition holds, the function returns 2; if
-  //      only the second holds, the function returns 3.  If both hold
-  //      the function returns either 2 or 3 (and the function is not
-  //      required to return the same one if called another time with the
-  //      same arguments).
 
 bool isValid(string infix)
 {	
+	//removing space characters
+	for (int i = 0; i < infix.size(); i++)
+	{
+		if (infix[i] == ' ')
+		{
+			infix = infix.substr(0,i) + infix.substr(i+1);
+			i--;
+		}
+	}
+
 	//checking the front and the end for invalid locations of '|' and '&'
 	if (infix[0] == '&' || infix[0] == '|' || infix[infix.size()-1] == '&' || infix[infix.size()-1] == '|')
 		return false;
@@ -66,7 +170,7 @@ bool isValid(string infix)
 			case ')':
 				break;
 			default:
-				if (!isLower(infix[i]))
+				if (!islower(infix[i]))
 					return false;
 		}
 	}
@@ -127,7 +231,3 @@ bool isValid(string infix)
 		}
 	}
 }
-
-// implementations of any additional functions you might have written
-//   to help you evaluate an expression
-//   a main routine to test your function
