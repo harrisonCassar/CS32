@@ -17,7 +17,7 @@ bool pathExists(string maze[], int nRows, int nCols, int sr, int sc, int er, int
     // Return true if there is a path from (sr,sc) to (er,ec)
     // through the maze; return false otherwise
 
-int main()
+/*int main()
 {
     string maze[10] = {
         "XXXXXXXXXX",
@@ -36,7 +36,7 @@ int main()
         cout << "Solvable!" << endl;
     else
         cout << "Out of luck!" << endl;
-}
+}*/
 
 bool pathExists(string maze[], int nRows, int nCols, int sr, int sc, int er, int ec)
 {

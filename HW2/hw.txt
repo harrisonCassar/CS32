@@ -15,3 +15,5 @@
 
 4. The first 12 coordinate pairs that are dequeued off the queue are:
 	(3,5), (4,5), (3,4), (3,6), (5,5), (3,3), (2,4), (6,5), (5,4), (1,4), (7,5), (5,3)
+
+	The two algorithms differ from each other by the fact that one utilizes a stack and the other a queue, which is significant because stacks operate on the property of First In, First Out, whereas queues operate on the property of First In, Last Out. This is why the first algorithm (which utilizes a stack) visits each point in an entire path before returning to explore another path from the starting position, while the second algorithm (which utilizes a queue) makes small progress on exploring each path at the same time.
