@@ -87,6 +87,8 @@ bool pathExists(string maze[], int nRows, int nCols, int sr, int sc, int er, int
 			maze[current.r()][current.c()+1] = 'X';
 		}
 	}
+	
+	return false;
 }
 
 

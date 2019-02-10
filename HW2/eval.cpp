@@ -141,7 +141,7 @@ int evaluate(string infix, const Set& trueValues, const Set& falseValues, string
 	return 0;
 }
 
-/*int main()
+vint main()
 {
 	string trueChars = "tywz";
 	string falseChars = "fnx";
@@ -174,7 +174,7 @@ int evaluate(string infix, const Set& trueValues, const Set& falseValues, string
 	falses.insert('w');
 	assert(evaluate("w| f", trues, falses, pf, answer) == 0 && pf == "wf|" && !answer);
 	cout << "Passed all tests" << endl;
-}*/
+}
 
 //implementation for isValid syntax-checking helper function for infix expressions
 bool isValid(string infix)
