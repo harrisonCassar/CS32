@@ -96,19 +96,15 @@ void order(double a[], int n)
 	if (n <= 1)
 		return;
 
-	int firstNotGreater
+	int firstNotGreater;
 	int firstLess;
 
 	//divide array with first element being divider
-	divide(a,n,a[0], firstNotGreater, firstLess)
+	divide(a,n,a[0], firstNotGreater, firstLess);
 
 	//sort left side
-	if (firstLess != n)
-		order(a,firstLess+1)
+	order(a, firstNotGreater-1);	
 
 	//sort right
-	if (firstNotGreater == n)
-		order(a+1,n-1);
-	else
-		order(a+firstNotGreater+2,n-(firstNotGreater+2));
+	order(a+firstLess,n-firstLess);
 }
