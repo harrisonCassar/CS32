@@ -5,12 +5,10 @@
 
 #include "GameWorld.h"
 #include "Level.h"
+#include "Actor.h"
 #include <string>
 #include <list>
 using namespace std;
-
-//declare Actor class's existence
-class Actor;
 
 class StudentWorld : public GameWorld
 {
@@ -23,10 +21,10 @@ public:
     virtual void cleanUp();
 	
 private:
-	Actor* createActor(Level::MazeEntry ge);
+	Actor* createActor(Level::MazeEntry ge, double startX, double startY);
 
 	list<Actor*> m_actorList;
-	Actor* m_player;
+	Penelope* m_player;
 	int m_numCitizensLeft;
 };
 
