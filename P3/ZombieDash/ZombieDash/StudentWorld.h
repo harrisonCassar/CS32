@@ -19,6 +19,8 @@ public:
 	virtual int init();
     virtual int move();
     virtual void cleanUp();
+
+	bool checkBoundary(double dest_x, double dest_y);
 	
 private:
 	Actor* createActor(Level::MazeEntry ge, double startX, double startY);

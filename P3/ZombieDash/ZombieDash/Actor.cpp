@@ -1,10 +1,9 @@
 #include "Actor.h"
 #include "StudentWorld.h"
 
-
 //==============================================ACTORS's IMPLEMENTATIONS=============================================
 
-Actor::Actor(int imageID, double startX, double startY) : GraphObject(imageID,startX,startY), m_isDead(false) {}
+Actor::Actor(int imageID, double startX, double startY, int depth, StudentWorld* world) : GraphObject(imageID,startX,startY,right,depth), m_isDead(false), m_world(world) {}
 
 bool Actor::isDead()
 {
@@ -16,12 +15,16 @@ void Actor::setDead()
 	m_isDead = true;
 }
 
+StudentWorld* Actor::getWorld()
+{
+	return m_world;
+}
+
 //==============================================PENELOPE's IMPLEMENTATIONS===========================================
 
 //constructor
-Penelope::Penelope(double startX, double startY) : Actor(IID_PLAYER, startX, startY)
+Penelope::Penelope(double startX, double startY, StudentWorld* world) : Actor(IID_PLAYER, startX, startY,0,world)
 {
-	m_keyPressed = -1;
 	m_supplyLandmines = 0;
 	m_supplyFlamethrower = 0;
 	m_supplyVaccines = 0;
@@ -30,12 +33,7 @@ Penelope::Penelope(double startX, double startY) : Actor(IID_PLAYER, startX, sta
 }
 
 //accessor function implementations
-int Penelope::getKeyPressed()
-{
-	return m_keyPressed;
-}
-
-int Penelope::getSupplyLandmines()
+/*int Penelope::getSupplyLandmines()
 {
 	return m_supplyLandmines;
 }
@@ -63,14 +61,9 @@ bool Penelope::isInfected()
 int Penelope::getInfectedCount()
 {
 	return m_infectedCount;
-}
+}*/
 
 //other function implementations
-void Penelope::setKeyPressed(int newKey)
-{
-	m_keyPressed = newKey;
-}
-
 void Penelope::doSomething()
 {
 	if (isDead())
@@ -86,36 +79,84 @@ void Penelope::doSomething()
 		}
 	}
 	
-	if (m_keyPressed != -1)
+	int ch;
+	if (getWorld()->getKey(ch))
 	{
-		switch (m_keyPressed)
+		switch (ch)
 		{
 		case KEY_PRESS_LEFT:
+		{
+			setDirection(left);
 
-		case KEY_PRESS_RIGHT:
-		case KEY_PRESS_UP:
-		case KEY_PRESS_DOWN:
-		case KEY_PRESS_SPACE:
-		case KEY_PRESS_TAB:
-		case KEY_PRESS_ENTER:
+			double dest_x = getX() - 4;
+			double dest_y = getY();
+
+			//if not out of bounds,
+
+			//NEED TO STILL CHECK FOR BEING OUT OF BOUNDS
+
+			moveTo(getX() - 4, getY());
+			break;
 		}
+		case KEY_PRESS_RIGHT:
+		{
+			setDirection(right);
+			moveTo(getX() + 4, getY());
+			break;
+		}
+		case KEY_PRESS_UP:
+		{
+			setDirection(up);
+			moveTo(getX(), getY() + 4);
+			break;
+		}
+		case KEY_PRESS_DOWN:
+		{
+			setDirection(down);
+			moveTo(getX(), getY() - 4);
+			break;
+		}
+		case KEY_PRESS_SPACE:
+		{
+			if (m_supplyFlamethrower > 0)
+			{
+				m_supplyFlamethrower--;
+				//play SOUND_PLAYER_FIRE sound effect
 
+				//Introduce three new flame objects into the game in front  of me
+			}
 
+			break;
+		}
+		case KEY_PRESS_TAB:
+		{
+			if (m_supplyLandmines > 0)
+			{
+				m_supplyLandmines--;
 
+				//Introduce landmine object on ground into the game
+			}
 
-		If the user pressed the UP key then
-		Increase my y location by one
-		If the user pressed the DOWN key then
-		Decrease my y location by one
-		...
-		If the user pressed the space bar to fire and I have flamethrower charges left, then
-		Introduce three new flame objects into the game in front  of me
-		...
+			break;
+		}
+		case KEY_PRESS_ENTER:
+		{
+			if (m_supplyVaccines > 0)
+			{
+				m_supplyVaccines--;
+
+				m_isInfected = false;
+				//m_infectedCount = 0;
+			}
+
+			break;
+		}
+		}
+	}
 }
-...
- };
 
 //==============================================WALL's IMPLEMENTATIONS===============================================
 
-Wall::Wall(double startX, double startY) : Actor(IID_WALL, startX, startY) {}
+Wall::Wall(double startX, double startY, StudentWorld* world) : Actor(IID_WALL, startX, startY,0, world) {}
 
+void Wall::doSomething() {}

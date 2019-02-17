@@ -4,36 +4,35 @@
 #include "GraphObject.h"
 #include "GameConstants.h"
 
+class StudentWorld;
+
 class Actor : public GraphObject
 {
 public:
-	Actor(int imageID, double startX, double startY);
+	Actor(int imageID, double startX, double startY, int depth, StudentWorld* world);
 	bool isDead();
 	void setDead();
+	StudentWorld* getWorld();
 	virtual void doSomething() = 0;
 private:
 	bool m_isDead;
-	//m_direction;
-	//m_depth;
+	StudentWorld* m_world;
 };
 
 class Penelope : public Actor
 {
 public:
-	Penelope(double startX, double startY);
-	virtual void setKeyPressed(int newKey);
+	Penelope(double startX, double startY, StudentWorld* world);
 	virtual void doSomething();
 
 	//accessor functions
-	int getKeyPressed();
-	int getSupplyLandmines();
-	int getSupplyFlamethrower();
-	int getSupplyVaccines();
-	int getInfectedCount();
-	bool isInfected();
+	//int getSupplyLandmines();
+	//int getSupplyFlamethrower();
+	//int getSupplyVaccines();
+	//int getInfectedCount();
+	//bool isInfected();
 
 private:
-	int m_keyPressed;
 	int m_supplyLandmines;
 	int m_supplyFlamethrower;
 	int m_supplyVaccines;
@@ -44,7 +43,7 @@ private:
 class Wall : public Actor
 {
 public:
-	Wall(double startX, double startY);
+	Wall(double startX, double startY, StudentWorld* world);
 	virtual void doSomething();
 private:
 };
