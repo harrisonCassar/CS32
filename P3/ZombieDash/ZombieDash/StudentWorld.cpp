@@ -15,6 +15,9 @@ GameWorld* createStudentWorld(string assetPath)
 StudentWorld::StudentWorld(string assetPath)
 : GameWorld(assetPath)
 {
+	m_player = nullptr;
+	m_numCitizensLeft = 0;
+	m_finishedLevel = false;
 }
 
 StudentWorld::~StudentWorld()
@@ -27,6 +30,7 @@ int StudentWorld::init()
 	//reset certain member variables
 	m_numCitizensLeft = 0;
 	m_player = nullptr;
+	m_finishedLevel = false;
 
 	//construct new level object
 	Level lev(assetPath());
@@ -89,12 +93,18 @@ int StudentWorld::move()
 
 	m_player->doSomething();
 
-	/*while (it != m_actorList.end())
+	while (it != m_actorList.end())
+	{
 		(*it)->doSomething();
-		*/
+		it++;
+	}
     // This code is here merely to allow the game to build, run, and terminate after you hit enter.
     // Notice that the return value GWSTATUS_PLAYER_DIED will cause our framework to end the current level.
     //decLives();
+
+	if (m_finishedLevel)
+		return GWSTATUS_FINISHED_LEVEL;
+
     return GWSTATUS_CONTINUE_GAME;
 }
 
@@ -112,17 +122,27 @@ void StudentWorld::cleanUp()
 		delete m_player;
 }
 
+void StudentWorld::finishLevel()
+{
+	m_finishedLevel = true;
+}
+
+int StudentWorld::getNumCitizensLeft()
+{
+	return m_numCitizensLeft;
+}
+
 bool StudentWorld::checkBoundaryAt(double dest_x, double dest_y, Actor* src)
 {
 	double x_1 = dest_x;
 	double y_1 = dest_y;
-	double x_2 = dest_x + SPRITE_WIDTH;
+	double x_2 = dest_x + SPRITE_WIDTH-1;
 	double y_2 = dest_y;
 
-	double x_3 = dest_x + SPRITE_WIDTH;
-	double y_3 = dest_y + SPRITE_HEIGHT;
+	double x_3 = dest_x + SPRITE_WIDTH-1;
+	double y_3 = dest_y + SPRITE_HEIGHT-1;
 	double x_4 = dest_x;
-	double y_4 = dest_y + SPRITE_HEIGHT;
+	double y_4 = dest_y + SPRITE_HEIGHT-1;
 
 	list<Actor*>::iterator it = m_actorList.begin();
 
@@ -136,8 +156,8 @@ bool StudentWorld::checkBoundaryAt(double dest_x, double dest_y, Actor* src)
 			{
 				double other_x_min = (*it)->getX();
 				double other_y_min = (*it)->getY();
-				double other_x_max = other_x_min + SPRITE_WIDTH;
-				double other_y_max = other_y_min + SPRITE_HEIGHT;
+				double other_x_max = other_x_min + SPRITE_WIDTH-1;
+				double other_y_max = other_y_min + SPRITE_HEIGHT-1;
 
 				if ((x_1 >= other_x_min && x_1 <= other_x_max) && (y_1 >= other_y_min && y_1 <= other_y_max))
 					return true;
@@ -158,6 +178,26 @@ bool StudentWorld::checkBoundaryAt(double dest_x, double dest_y, Actor* src)
 
 bool StudentWorld::checkOverlapWith(double curr_x, double curr_y, std::string type, Actor* overlapped)
 {
+	if (type == "Penelope")
+	{
+		double x_center = curr_x + SPRITE_WIDTH / 2.0;
+		double y_center = curr_y + SPRITE_HEIGHT / 2.0;
+
+		double other_x_center = m_player->getX() + SPRITE_WIDTH / 2.0;
+		double other_y_center = m_player->getY() + SPRITE_HEIGHT / 2.0;
+
+		double x_difference = other_x_center - x_center;
+		double y_difference = other_y_center - y_center;
+
+		double distance = (x_difference*x_difference) + (y_difference*y_difference);
+
+		if (distance <= 100.0)
+		{
+			overlapped = m_player;
+			return true;
+		}
+	}
+
 	list<Actor*>::iterator it = m_actorList.begin();
 
 	while (it != m_actorList.end())
@@ -175,7 +215,7 @@ bool StudentWorld::checkOverlapWith(double curr_x, double curr_y, std::string ty
 
 			double distance = (x_difference*x_difference) + (y_difference*y_difference);
 
-			if (distance <= 100)
+			if (distance <= 100.0)
 			{
 				overlapped = (*it);
 				return true;
@@ -205,6 +245,7 @@ Actor* StudentWorld::createActor(Level::MazeEntry ge, double x, double y)
 		break;
 	case Level::citizen:
 		//result = new Citizen(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
+		result = new Wall(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
 		break;
 	case Level::wall:
 		result = new Wall(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
@@ -225,8 +266,6 @@ Actor* StudentWorld::createActor(Level::MazeEntry ge, double x, double y)
 		//result = new LandmineBox(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
 		break;
 	}
-
-	cerr << "Created an actor!" << endl;
 
 	return result;
 }

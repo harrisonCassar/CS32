@@ -20,6 +20,10 @@ public:
     virtual int move();
     virtual void cleanUp();
 
+	void finishLevel();
+
+	int getNumCitizensLeft();
+
 	bool checkBoundaryAt(double dest_x, double dest_y, Actor* src);
 	bool checkOverlapWith(double curr_x, double curr_y, std::string type, Actor* overlapped);
 	
@@ -29,6 +33,7 @@ private:
 	list<Actor*> m_actorList;
 	Penelope* m_player;
 	int m_numCitizensLeft;
+	bool m_finishedLevel;
 };
 
 #endif // STUDENTWORLD_H_

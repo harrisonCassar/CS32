@@ -80,7 +80,7 @@ void Penelope::doSomething()
 		if (++m_infectedCount >= 500)
 		{
 			setDead();
-			//play SOUND_PLAYER_DIE sound effect
+			getWorld()->playSound(SOUND_PLAYER_DIE);
 			return; //MAKE SURE THAT STUDENT WORLD THEN IMMEDIATELY STOPS DOING ANYTHING DURING THE TICK AND ENDS THE LEVEL
 		}
 	}
@@ -134,7 +134,7 @@ void Penelope::doSomething()
 			if (m_supplyFlamethrower > 0)
 			{
 				m_supplyFlamethrower--;
-				//play SOUND_PLAYER_FIRE sound effect
+				getWorld()->playSound(SOUND_PLAYER_FIRE);
 
 				//Introduce three new flame objects into the game in front  of me
 			}
@@ -173,17 +173,24 @@ void Wall::doSomething() {}
 
 //==============================================EXIT's IMPLEMENTATIONS===============================================
 
-Exit::Exit(double startX, double startY, StudentWorld* world) : Actor(IID_WALL, startX, startY, 1, world, "Exit") {}
+Exit::Exit(double startX, double startY, StudentWorld* world) : Actor(IID_EXIT, startX, startY, 1, world, "Exit") {}
 
 void Exit::doSomething()
 {
-	Actor* temp;
+	Actor* temp = nullptr;
 	if (getWorld()->checkOverlapWith(getX(), getY(), "Citizen", temp))
 	{
-	}
-		//if overlaps a citizen, tell world to increase points, kill citizen, and play SOUND_CITIZEN_SAVED
+		getWorld()->increaseScore(500);
+	
+		temp->setDead();
 
-	//if overlaps
+		getWorld()->playSound(SOUND_CITIZEN_SAVED);
+	}
+
+	else if (getWorld()->checkOverlapWith(getX(), getY(), "Penelope", temp) && getWorld()->getNumCitizensLeft() == 0)
+	{
+		getWorld()->finishLevel();
+	}
 }
 
 
