@@ -1,9 +1,10 @@
 #include "Actor.h"
 #include "StudentWorld.h"
+#include <string>
 
 //==============================================ACTORS's IMPLEMENTATIONS=============================================
 
-Actor::Actor(int imageID, double startX, double startY, int depth, StudentWorld* world) : GraphObject(imageID,startX,startY,right,depth), m_isDead(false), m_world(world) {}
+Actor::Actor(int imageID, double startX, double startY, int depth, StudentWorld* world, std::string type) : GraphObject(imageID, startX, startY, right, depth), m_isDead(false), m_world(world), m_type(type) {}
 
 bool Actor::isDead()
 {
@@ -15,6 +16,11 @@ void Actor::setDead()
 	m_isDead = true;
 }
 
+std::string Actor::getType()
+{
+	return m_type;
+}
+
 StudentWorld* Actor::getWorld()
 {
 	return m_world;
@@ -23,7 +29,7 @@ StudentWorld* Actor::getWorld()
 //==============================================PENELOPE's IMPLEMENTATIONS===========================================
 
 //constructor
-Penelope::Penelope(double startX, double startY, StudentWorld* world) : Actor(IID_PLAYER, startX, startY,0,world)
+Penelope::Penelope(double startX, double startY, StudentWorld* world) : Actor(IID_PLAYER, startX, startY,0,world, "Penelope")
 {
 	m_supplyLandmines = 0;
 	m_supplyFlamethrower = 0;
@@ -85,39 +91,46 @@ void Penelope::doSomething()
 		switch (ch)
 		{
 		case KEY_PRESS_LEFT:
-		{
 			setDirection(left);
 
-			double dest_x = getX() - 4;
-			double dest_y = getY();
+			if (!getWorld()->checkBoundaryAt(getX() - 4, getY(), this))
+			{
+				moveTo(getX() - 4, getY());
+			}
 
-			//if not out of bounds,
-
-			//NEED TO STILL CHECK FOR BEING OUT OF BOUNDS
-
-			moveTo(getX() - 4, getY());
 			break;
-		}
+
 		case KEY_PRESS_RIGHT:
-		{
 			setDirection(right);
-			moveTo(getX() + 4, getY());
+
+			if (!getWorld()->checkBoundaryAt(getX() + 4, getY(), this))
+			{
+				moveTo(getX() + 4, getY());
+			}
+
 			break;
-		}
+
 		case KEY_PRESS_UP:
-		{
 			setDirection(up);
-			moveTo(getX(), getY() + 4);
+
+			if (!getWorld()->checkBoundaryAt(getX(), getY() + 4, this))
+			{
+				moveTo(getX(), getY() + 4);
+			}
+
 			break;
-		}
+
 		case KEY_PRESS_DOWN:
-		{
 			setDirection(down);
-			moveTo(getX(), getY() - 4);
+
+			if (!getWorld()->checkBoundaryAt(getX(), getY() - 4, this))
+			{
+				moveTo(getX(), getY() - 4);
+			}
+
 			break;
-		}
+
 		case KEY_PRESS_SPACE:
-		{
 			if (m_supplyFlamethrower > 0)
 			{
 				m_supplyFlamethrower--;
@@ -127,9 +140,8 @@ void Penelope::doSomething()
 			}
 
 			break;
-		}
+
 		case KEY_PRESS_TAB:
-		{
 			if (m_supplyLandmines > 0)
 			{
 				m_supplyLandmines--;
@@ -138,9 +150,8 @@ void Penelope::doSomething()
 			}
 
 			break;
-		}
+
 		case KEY_PRESS_ENTER:
-		{
 			if (m_supplyVaccines > 0)
 			{
 				m_supplyVaccines--;
@@ -151,12 +162,28 @@ void Penelope::doSomething()
 
 			break;
 		}
-		}
 	}
 }
 
 //==============================================WALL's IMPLEMENTATIONS===============================================
 
-Wall::Wall(double startX, double startY, StudentWorld* world) : Actor(IID_WALL, startX, startY,0, world) {}
+Wall::Wall(double startX, double startY, StudentWorld* world) : Actor(IID_WALL, startX, startY, 0, world, "Wall") {}
 
 void Wall::doSomething() {}
+
+//==============================================EXIT's IMPLEMENTATIONS===============================================
+
+Exit::Exit(double startX, double startY, StudentWorld* world) : Actor(IID_WALL, startX, startY, 1, world, "Exit") {}
+
+void Exit::doSomething()
+{
+	Actor* temp;
+	if (getWorld()->checkOverlapWith(getX(), getY(), "Citizen", temp))
+	{
+	}
+		//if overlaps a citizen, tell world to increase points, kill citizen, and play SOUND_CITIZEN_SAVED
+
+	//if overlaps
+}
+
+

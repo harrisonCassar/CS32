@@ -112,16 +112,80 @@ void StudentWorld::cleanUp()
 		delete m_player;
 }
 
-bool StudentWorld::checkBoundary(double dest_x, double dest_y)
+bool StudentWorld::checkBoundaryAt(double dest_x, double dest_y, Actor* src)
 {
+	double x_1 = dest_x;
+	double y_1 = dest_y;
+	double x_2 = dest_x + SPRITE_WIDTH;
+	double y_2 = dest_y;
 
+	double x_3 = dest_x + SPRITE_WIDTH;
+	double y_3 = dest_y + SPRITE_HEIGHT;
+	double x_4 = dest_x;
+	double y_4 = dest_y + SPRITE_HEIGHT;
 
 	list<Actor*>::iterator it = m_actorList.begin();
 
 	while (it != m_actorList.end())
 	{
-		if 
+		std::string type = (*it)->getType();
+
+		if (*it != src)
+		{
+			if (type == "Zombie" || type == "Penelope" || type == "Citizen" || type == "Wall")
+			{
+				double other_x_min = (*it)->getX();
+				double other_y_min = (*it)->getY();
+				double other_x_max = other_x_min + SPRITE_WIDTH;
+				double other_y_max = other_y_min + SPRITE_HEIGHT;
+
+				if ((x_1 >= other_x_min && x_1 <= other_x_max) && (y_1 >= other_y_min && y_1 <= other_y_max))
+					return true;
+				if ((x_2 >= other_x_min && x_2 <= other_x_max) && (y_2 >= other_y_min && y_2 <= other_y_max))
+					return true;
+				if ((x_3 >= other_x_min && x_3 <= other_x_max) && (y_3 >= other_y_min && y_3 <= other_y_max))
+					return true;
+				if ((x_4 >= other_x_min && x_4 <= other_x_max) && (y_4 >= other_y_min && y_4 <= other_y_max))
+					return true;
+			}
+		}
+
+		it++;
 	}
+
+	return false;
+}
+
+bool StudentWorld::checkOverlapWith(double curr_x, double curr_y, std::string type, Actor* overlapped)
+{
+	list<Actor*>::iterator it = m_actorList.begin();
+
+	while (it != m_actorList.end())
+	{
+		if ((*it)->getType() == type)
+		{
+			double x_center = curr_x + SPRITE_WIDTH/2;
+			double y_center = curr_y + SPRITE_HEIGHT/2;
+
+			double other_x_center = (*it)->getX() + SPRITE_WIDTH / 2;
+			double other_y_center = (*it)->getY() + SPRITE_HEIGHT / 2;
+
+			double x_difference = other_x_center - x_center;
+			double y_difference = other_y_center - y_center;
+
+			double distance = (x_difference*x_difference) + (y_difference*y_difference);
+
+			if (distance <= 100)
+			{
+				overlapped = (*it);
+				return true;
+			}
+		}
+
+		it++;
+	}
+	
+	return false;
 }
 
 Actor* StudentWorld::createActor(Level::MazeEntry ge, double x, double y)
@@ -146,8 +210,7 @@ Actor* StudentWorld::createActor(Level::MazeEntry ge, double x, double y)
 		result = new Wall(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
 		break;
 	case Level::exit:
-		result = new Wall(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
-		//result = new Exit(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
+		result = new Exit(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
 		break;
 	case Level::pit:
 		//result = new Pit(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
@@ -162,6 +225,8 @@ Actor* StudentWorld::createActor(Level::MazeEntry ge, double x, double y)
 		//result = new LandmineBox(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
 		break;
 	}
+
+	cerr << "Created an actor!" << endl;
 
 	return result;
 }

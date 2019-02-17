@@ -20,7 +20,8 @@ public:
     virtual int move();
     virtual void cleanUp();
 
-	bool checkBoundary(double dest_x, double dest_y);
+	bool checkBoundaryAt(double dest_x, double dest_y, Actor* src);
+	bool checkOverlapWith(double curr_x, double curr_y, std::string type, Actor* overlapped);
 	
 private:
 	Actor* createActor(Level::MazeEntry ge, double startX, double startY);

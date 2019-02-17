@@ -3,18 +3,21 @@
 
 #include "GraphObject.h"
 #include "GameConstants.h"
+#include <string>
 
 class StudentWorld;
 
 class Actor : public GraphObject
 {
 public:
-	Actor(int imageID, double startX, double startY, int depth, StudentWorld* world);
+	Actor(int imageID, double startX, double startY, int depth, StudentWorld* world, std::string type);
 	bool isDead();
 	void setDead();
+	std::string getType();
 	StudentWorld* getWorld();
 	virtual void doSomething() = 0;
 private:
+	std::string m_type;
 	bool m_isDead;
 	StudentWorld* m_world;
 };
@@ -44,6 +47,13 @@ class Wall : public Actor
 {
 public:
 	Wall(double startX, double startY, StudentWorld* world);
+	virtual void doSomething();
+};
+
+class Exit : public Actor
+{
+public:
+	Exit(double startX, double startY, StudentWorld* world);
 	virtual void doSomething();
 private:
 };
