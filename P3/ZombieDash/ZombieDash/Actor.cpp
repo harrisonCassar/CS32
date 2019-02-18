@@ -6,7 +6,7 @@
 
 //==============================================ACTORS's IMPLEMENTATIONS=============================================
 
-Actor::Actor(int imageID, double startX, double startY, int direction, int depth, StudentWorld* world, std::string type) : GraphObject(imageID, startX, startY, direction, depth), m_isDead(false), m_isActive(false), m_world(world), m_type(type), m_isInfected(false), m_infectedCount(0) {}
+Actor::Actor(int imageID, double startX, double startY, int direction, int depth, StudentWorld* world, std::string type) : GraphObject(imageID, startX, startY, direction, depth), m_isDead(false), m_isActive(false), m_world(world), m_type(type), m_isInfected(false), m_infectedCount(0), m_lifeTicks(0) {}
 
 bool Actor::isDead()
 {
@@ -58,6 +58,16 @@ bool Actor::setActive(bool value)
 	return m_isActive = value;
 }
 
+int Actor::getLifeTicks()
+{
+	return m_lifeTicks;
+}
+
+int Actor::incLifeTicks()
+{
+	return ++m_lifeTicks;
+}
+
 //==============================================Characters's IMPLEMENTATIONS===========================================
 Character::Character(int imageID, double startX, double startY, int depth, StudentWorld* world, std::string type) : Actor(imageID, startX, startY, right, 0, world, type)
 {
@@ -85,7 +95,7 @@ Penelope::Penelope(double startX, double startY, StudentWorld* world) : Characte
 }
 
 //accessor function implementations
-/*int Penelope::getSupplyLandmines()
+int Penelope::getSupplyLandmines()
 {
 	return m_supplyLandmines;
 }
@@ -100,20 +110,20 @@ int Penelope::getSupplyVaccines()
 	return m_supplyVaccines;
 }
 
-int Penelope::getSupplyLandmines()
+int Penelope::incSupplyLandmines(int amount)
 {
-	return m_supplyLandmines;
+	return m_supplyLandmines += amount;
 }
 
-bool Penelope::isInfected()
+int Penelope::incSupplyFlamethrower(int amount)
 {
-	return m_isInfected;
+	return m_supplyFlamethrower += amount;
 }
 
-int Penelope::getInfectedCount()
+int Penelope::incSupplyVaccines(int amount)
 {
-	return m_infectedCount;
-}*/
+	return m_supplyVaccines += amount;
+}
 
 //other function implementations
 void Penelope::doSomething()
@@ -123,7 +133,6 @@ void Penelope::doSomething()
 
 	if (isInfected())
 	{
-		cerr << "InfectedCount: " << getInfectedCount() << endl;
 		if (incInfectedCount() >= 500)
 		{
 			setDead();
@@ -235,7 +244,6 @@ void Exit::doSomething()
 
 		getWorld()->decNumCitizensLeft();
 	}
-
 	else if (getWorld()->checkOverlapWith(getX(), getY(), "Penelope", temp) && getWorld()->getNumCitizensLeft() == 0)
 	{
 		getWorld()->finishLevel();
@@ -797,22 +805,147 @@ void SmartZombie::doSomething()
 
 
 //=============================================VOMIT's IMPLEMENTATIONS===============================================
-Vomit::Vomit(double startX, double startY, int direction, StudentWorld* world) : Actor(IID_VOMIT, startX, startY, direction, 0, world, "Vomit"), m_lifeTicks(0) {}
+Vomit::Vomit(double startX, double startY, int direction, StudentWorld* world) : Actor(IID_VOMIT, startX, startY, direction, 0, world, "Vomit") {}
 
 void Vomit::doSomething()
 {
 	if (isDead())
 		return;
 
-	if (m_lifeTicks > 2)
+	if (getLifeTicks() > 2)
 	{
 		setDead();
 		return;
 	}
 	else
-		m_lifeTicks++;
+		cerr << incLifeTicks() << endl;
 
 	getWorld()->infectAllOverlapping(this);
 }
 
 //===============================================FLAME's IMPLEMENTATIONS===============================================
+Flame::Flame(double startX, double startY, int direction, StudentWorld* world) : Actor(IID_FLAME, startX, startY, direction, 0, world, "Flame") {}
+
+void Flame::doSomething()
+{
+	if (isDead())
+		return;
+
+	if (getLifeTicks() > 2)
+	{
+		setDead();
+		return;
+	}
+	else
+		incLifeTicks();
+
+	getWorld()->damageAllOverlapping(this);
+}
+
+//===============================================PIT's IMPLEMENTATIONS===============================================
+Pit::Pit(double startX, double startY, StudentWorld* world) : Actor(IID_PIT, startX, startY, right, 0, world, "Pit") {}
+
+void Pit::doSomething()
+{
+	getWorld()->damageAllOverlapping(this);
+}
+
+//===============================================GOODIE's IMPLEMENTATIONS===============================================
+Goodie::Goodie(int imageID, double startX, double startY, StudentWorld* world, string type) : Actor(imageID, startX, startY, right, 1, world, "Goodie"), m_type(type) {}
+
+void Goodie::doSomething()
+{
+	if (isDead())
+		return;
+	
+	Actor* temp = nullptr;
+
+	if (getWorld()->checkOverlapWith(getX(), getY(), "Penelope", temp))
+	{
+		getWorld()->increaseScore(50);
+
+		setDead();
+
+		getWorld()->playSound(SOUND_GOT_GOODIE);
+
+		getWorld()->updateGoodies(m_type);
+	}
+}
+
+//===============================================VACCINE GOODIE's IMPLEMENTATIONS===============================================
+VaccineGoodie::VaccineGoodie(double startX, double startY, StudentWorld* world) : Goodie(IID_VACCINE_GOODIE, startX, startY, world, "VaccineGoodie") {}
+
+//===============================================GAS CAN GOODIE's IMPLEMENTATIONS===============================================
+GasCanGoodie::GasCanGoodie(double startX, double startY, StudentWorld* world) : Goodie(IID_GAS_CAN_GOODIE, startX, startY, world, "GasCanGoodie") {}
+
+//===============================================LANDMINE GOODIE's IMPLEMENTATIONS===============================================
+LandmineGoodie::LandmineGoodie(double startX, double startY, StudentWorld* world) : Goodie(IID_LANDMINE_GOODIE, startX, startY, world, "LandmineGoodie") {}
+
+//==================================================LANDMINE's IMPLEMENTATIONS===============================================
+Landmine::Landmine(double startX, double startY, StudentWorld* world) : Actor(IID_LANDMINE, startX, startY, right, 1, world, "Landmine"), m_safetyTicks(30) {}
+
+bool Landmine::isOnSafety()
+{
+	if (m_safetyTicks != 0)
+		return true;
+	return false;
+}
+
+void Landmine::doSomething()
+{
+	if (isDead())
+		return;
+
+	Actor* temp = nullptr;
+
+	if (isOnSafety())
+	{
+		if (getWorld()->checkOverlapWith(getX(), getY(), "Flame", temp))
+		{
+			setDead();
+
+			getWorld()->playSound(SOUND_LANDMINE_EXPLODE);
+
+			//introduce flames at and around landmine's position
+			getWorld()->createActor("Flame", getX() - SPRITE_WIDTH, getY() + SPRITE_HEIGHT, up);
+			getWorld()->createActor("Flame", getX(), getY() + SPRITE_HEIGHT, up);
+			getWorld()->createActor("Flame", getX() + SPRITE_WIDTH, getY() + SPRITE_HEIGHT, up);
+			getWorld()->createActor("Flame", getX() - SPRITE_WIDTH, getY(), up);
+			getWorld()->createActor("Flame", getX(), getY(), up);
+			getWorld()->createActor("Flame", getX() + SPRITE_WIDTH, getY(), up);
+			getWorld()->createActor("Flame", getX() - SPRITE_WIDTH, getY() - SPRITE_HEIGHT, up);
+			getWorld()->createActor("Flame", getX(), getY() - SPRITE_HEIGHT, up);
+			getWorld()->createActor("Flame", getX() + SPRITE_WIDTH, getY() - SPRITE_HEIGHT, up);
+
+			//introduce pit at landmine's positon
+			getWorld()->createActor("Pit", getX(), getY(), up);
+		}
+
+		m_safetyTicks--;
+		return;
+	}
+
+	if (getWorld()->checkOverlapWith(getX(), getY(), "Penelope", temp) ||
+		getWorld()->checkOverlapWith(getX(), getY(), "Citizen", temp) ||
+		getWorld()->checkOverlapWith(getX(), getY(), "Zombie", temp) ||
+		getWorld()->checkOverlapWith(getX(), getY(), "Flame", temp))
+	{
+		setDead();
+
+		getWorld()->playSound(SOUND_LANDMINE_EXPLODE);
+
+		//introduce flames at and around landmine's position
+		getWorld()->createActor("Flame", getX() - SPRITE_WIDTH, getY() + SPRITE_HEIGHT, up);
+		getWorld()->createActor("Flame", getX(), getY() + SPRITE_HEIGHT, up);
+		getWorld()->createActor("Flame", getX() + SPRITE_WIDTH, getY() + SPRITE_HEIGHT, up);
+		getWorld()->createActor("Flame", getX() - SPRITE_WIDTH, getY(), up);
+		getWorld()->createActor("Flame", getX(), getY(), up);
+		getWorld()->createActor("Flame", getX() + SPRITE_WIDTH, getY(), up);
+		getWorld()->createActor("Flame", getX() - SPRITE_WIDTH, getY() - SPRITE_HEIGHT, up);
+		getWorld()->createActor("Flame", getX(), getY() - SPRITE_HEIGHT, up);
+		getWorld()->createActor("Flame", getX() + SPRITE_WIDTH, getY() - SPRITE_HEIGHT, up);
+
+		//introduce pit at landmine's positon
+		getWorld()->createActor("Pit", getX(), getY(), up);
+	}
+}

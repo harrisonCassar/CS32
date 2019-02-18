@@ -28,13 +28,19 @@ public:
 
 	bool checkBoundaryAt(double dest_x, double dest_y, Actor* src);
 	bool checkOverlapWith(double curr_x, double curr_y, std::string type, Actor* &overlapped);
+	bool checkSpecificOverlapWith(double curr_x, double curr_y, Actor* overlapped);
 	bool findNearest(double dest_x, double dest_y, std::string type, double &distance, Actor* &nearest);
 	Actor* createActor(Level::MazeEntry ge, double startX, double startY);
 	Actor* createActor(string type, double startX, double startY, int direction);
 
+	string updateStatLine();
+	void updateGoodies(string type);
+
 	void activateAllActors();
 
 	void infectAllOverlapping(Actor* src);
+	void damageAllOverlapping(Actor* src);
+	
 
 private:
 	list<Actor*> m_actorList;

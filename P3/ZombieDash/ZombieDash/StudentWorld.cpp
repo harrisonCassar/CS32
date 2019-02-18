@@ -117,7 +117,6 @@ int StudentWorld::move()
 	}
 
 	bool didNotDeleteSomething = false;
-	
 	while (!didNotDeleteSomething)
 	{
 		didNotDeleteSomething = true;
@@ -137,10 +136,10 @@ int StudentWorld::move()
 			}
 		}
 	}
-
 	activateAllActors();
 
-	//update status line with OSS
+	//update statistics line
+	setGameStatText(updateStatLine());
 
     return GWSTATUS_CONTINUE_GAME;
 }
@@ -332,7 +331,10 @@ bool StudentWorld::checkOverlapWith(double curr_x, double curr_y, std::string ty
 
 	while (it != m_actorList.end())
 	{
-		if ((*it)->getType() == type)
+		string actorType = (*it)->getType();
+		if (actorType == "SmartZombie" || actorType == "DumbZombie")
+			actorType = "Zombie";
+		if (actorType == type)
 		{
 			double x_center = curr_x + SPRITE_WIDTH/2;
 			double y_center = curr_y + SPRITE_HEIGHT/2;
@@ -354,7 +356,6 @@ bool StudentWorld::checkOverlapWith(double curr_x, double curr_y, std::string ty
 
 		it++;
 	}
-	
 
 	return false;
 }
@@ -383,16 +384,16 @@ Actor* StudentWorld::createActor(Level::MazeEntry ge, double x, double y)
 		result = new Exit(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
 		break;
 	case Level::pit:
-		//result = new Pit(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
+		result = new Pit(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
 		break;
 	case Level::vaccine_goodie:
-		//result = new VaccineGoodie(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
+		result = new VaccineGoodie(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
 		break;
 	case Level::gas_can_goodie:
-		//result = new GasCanGoodie(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
+		result = new GasCanGoodie(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
 		break;
 	case Level::landmine_goodie:
-		//result = new LandmineGoodie(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
+		result = new LandmineGoodie(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
 		break;
 	}
 	
@@ -400,7 +401,7 @@ Actor* StudentWorld::createActor(Level::MazeEntry ge, double x, double y)
 		m_actorList.push_back(result);
 
 	m_activeActors++;
-
+	cerr << "ACTIVE: " << m_activeActors << endl;
 	return result;
 }
 
@@ -410,14 +411,18 @@ Actor* StudentWorld::createActor(string type, double x, double y, int direction)
 	Level::MazeEntry ge;
 	if (type == "Landmine")
 	{
-		//result = new Landmine(x,y, this);
+		result = new Landmine(x,y, this);
 		m_actorList.push_back(result);
+		m_activeActors++;
+		cerr << "ACTIVE: " << m_activeActors << endl;
 		return result;
 	}
 	else if (type == "Flame")
 	{
-		//result = new Flame(x,y, this);
+		result = new Flame(x,y, direction, this);
 		m_actorList.push_back(result);
+		m_activeActors++;
+		cerr << "ACTIVE: " << m_activeActors << endl;
 		return result;
 	}
 
@@ -426,6 +431,7 @@ Actor* StudentWorld::createActor(string type, double x, double y, int direction)
 		result = new Vomit(x,y, direction, this);
 		m_actorList.push_back(result);
 		m_activeActors++;
+		cerr << "ACTIVE: " << m_activeActors << endl;
 		return result;
 	}
 
@@ -461,14 +467,99 @@ void StudentWorld::infectAllOverlapping(Actor* src)
 	
 	if (checkOverlapWith(src->getX(), src->getY(), "Penelope", overlapped))
 	{
-		cerr << "Infecting Penelope!" << endl;
 		overlapped->setInfected(true);
 	}
 
 	while (it != m_actorList.end())
 	{
-		if (checkOverlapWith(src->getX(), src->getY(), "Citizen", overlapped))
-			overlapped->setInfected(true);
+		if ((*it)->getType() == "Citizen")
+		{
+			if (checkSpecificOverlapWith(src->getX(), src->getY(), *it))
+			{
+				if (!(*it)->isInfected())
+				{
+					(*it)->setInfected(true);
+					playSound(SOUND_CITIZEN_INFECTED);
+				}
+			}
+		}
+
+		it++;
+	}
+}
+
+bool StudentWorld::checkSpecificOverlapWith(double curr_x, double curr_y, Actor* overlapped)
+{
+	double x_center = curr_x + SPRITE_WIDTH / 2;
+	double y_center = curr_y + SPRITE_HEIGHT / 2;
+
+	double other_x_center = overlapped->getX() + SPRITE_WIDTH / 2;
+	double other_y_center = overlapped->getY() + SPRITE_HEIGHT / 2;
+
+	double x_difference = other_x_center - x_center;
+	double y_difference = other_y_center - y_center;
+
+	double distance = (x_difference*x_difference) + (y_difference*y_difference);
+
+	if (distance <= 100.0)
+		return true;
+
+	return false;
+}
+
+void StudentWorld::damageAllOverlapping(Actor* src)
+{
+	Actor* overlapped = nullptr;
+
+	list<Actor*>::iterator it = m_actorList.begin();
+
+	if (checkOverlapWith(src->getX(), src->getY(), "Penelope", overlapped))
+	{
+		cerr << "Damaging Penelope!" << endl;
+		overlapped->setDead();
+	}
+
+	while (it != m_actorList.end())
+	{
+		if ((*it)->getType() == "Citizen")
+		{
+			if (checkSpecificOverlapWith(src->getX(), src->getY(), *it))
+			{
+				(*it)->setDead();
+				playSound(SOUND_CITIZEN_DIE);
+				increaseScore(-1000);
+				decNumCitizensLeft();
+			}
+		}
+		if ((*it)->getType() == "DumbZombie")
+		{
+			if (checkSpecificOverlapWith(src->getX(), src->getY(), *it))
+			{
+				(*it)->setDead();
+				playSound(SOUND_ZOMBIE_DIE);
+				increaseScore(1000);
+			}
+		}
+		if ((*it)->getType() == "SmartZombie")
+		{
+			if (checkSpecificOverlapWith(src->getX(), src->getY(), *it))
+			{
+				(*it)->setDead();
+				playSound(SOUND_ZOMBIE_DIE);
+				increaseScore(2000);
+			}
+		}
+		
+		//check for Landmine taken out; overlapping check is given to Landmine itself
+		//if (checkOverlapWith(src->getX(), src->getY(), "Landmine", overlapped))
+		
+		if ((*it)->getType() == "Goodie")
+		{
+			if (checkSpecificOverlapWith(src->getX(), src->getY(), *it))
+			{
+				(*it)->setDead();
+			}
+		}
 
 		it++;
 	}
@@ -484,4 +575,71 @@ void StudentWorld::activateAllActors()
 
 		it++;
 	}
+}
+
+string StudentWorld::updateStatLine()
+{
+	//declare stringstream
+	ostringstream oss;
+	oss.setf(ios::fixed);
+	oss.precision(2);
+
+	//get updated statistics
+	int score = getScore();
+	int level = getLevel();
+	int lives = getLives();
+	int sVaccines = m_player->getSupplyVaccines();
+	int sFlames = m_player->getSupplyFlamethrower();
+	int sLandmines = m_player->getSupplyLandmines();
+	int infectedCount = m_player->getInfectedCount();
+
+	//properly add score value
+	int magnitude = 0;
+	int scoreCopy;
+	if (score < 0)
+		score *= -1;
+
+	scoreCopy = score;
+
+	for (; ;)
+	{
+		scoreCopy /= 10;
+		magnitude++;
+
+		if (scoreCopy == 0)
+			break;
+	}
+	
+	oss << "Score: ";
+	
+	if (score < 0)
+	{
+		oss << "-";
+		magnitude++;
+	}
+
+	for (int i = 0; i < 6 - magnitude; i++)
+		oss << "0";
+
+	oss << score << "  ";
+
+	//add the rest with proper formatting
+	oss << "Level: " << level << "  ";
+	oss << "Lives: " << lives << "  ";
+	oss << "Vaccines: " << sVaccines << "  ";
+	oss << "Flames: " << sFlames << "  ";
+	oss << "Mines: " << sLandmines << "  ";
+	oss << "Infected: " << infectedCount;
+
+	return oss.str();
+}
+
+void StudentWorld::updateGoodies(string type)
+{
+	if (type == "VaccineGoodie")
+		m_player->incSupplyVaccines(1);
+	else if (type == "GasCanGoodie")
+		m_player->incSupplyFlamethrower(5);
+	else if (type == "LandmineGoodie")
+		m_player->incSupplyLandmines(2);
 }
