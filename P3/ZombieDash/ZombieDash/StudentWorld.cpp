@@ -72,11 +72,8 @@ int StudentWorld::init()
 					m_player = new Penelope(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
 				else if (ge != Level::empty)
 				{
-					Actor* temp = createActor(ge,x,y);
-					if (temp == nullptr)
+					if (createActor(ge,x,y) == nullptr)
 						return GWSTATUS_LEVEL_ERROR;
-
-					m_actorList.push_back(temp);
 				}
 			}
 		}
@@ -132,6 +129,11 @@ int StudentWorld::getNumCitizensLeft()
 	return m_numCitizensLeft;
 }
 
+Actor* StudentWorld::getPlayer()
+{
+	return m_player;
+}
+
 bool StudentWorld::checkBoundaryAt(double dest_x, double dest_y, Actor* src)
 {
 	double x_1 = dest_x;
@@ -146,19 +148,38 @@ bool StudentWorld::checkBoundaryAt(double dest_x, double dest_y, Actor* src)
 
 	list<Actor*>::iterator it = m_actorList.begin();
 
+	//check for boundary with Penelope
+	if (src != m_player)
+	{
+		double p_x_min = m_player->getX();
+		double p_y_min = m_player->getY();
+		double p_x_max = p_x_min + SPRITE_WIDTH - 1;
+		double p_y_max = p_y_min + SPRITE_HEIGHT - 1;
+
+		if ((x_1 >= p_x_min && x_1 <= p_x_max) && (y_1 >= p_y_min && y_1 <= p_y_max))
+			return true;
+		if ((x_2 >= p_x_min && x_2 <= p_x_max) && (y_2 >= p_y_min && y_2 <= p_y_max))
+			return true;
+		if ((x_3 >= p_x_min && x_3 <= p_x_max) && (y_3 >= p_y_min && y_3 <= p_y_max))
+			return true;
+		if ((x_4 >= p_x_min && x_4 <= p_x_max) && (y_4 >= p_y_min && y_4 <= p_y_max))
+			return true;
+	}
+
+	//check for boundary with all other actors (active, in list)
 	while (it != m_actorList.end())
 	{
 		std::string type = (*it)->getType();
-
 		if (*it != src)
 		{
-			if (type == "Zombie" || type == "Penelope" || type == "Citizen" || type == "Wall")
+			if (type == "SmartZombie" || type == "DumbZombie" || type == "Citizen" || type == "Wall")
 			{
 				double other_x_min = (*it)->getX();
 				double other_y_min = (*it)->getY();
 				double other_x_max = other_x_min + SPRITE_WIDTH-1;
 				double other_y_max = other_y_min + SPRITE_HEIGHT-1;
 
+				
 				if ((x_1 >= other_x_min && x_1 <= other_x_max) && (y_1 >= other_y_min && y_1 <= other_y_max))
 					return true;
 				if ((x_2 >= other_x_min && x_2 <= other_x_max) && (y_2 >= other_y_min && y_2 <= other_y_max))
@@ -176,7 +197,57 @@ bool StudentWorld::checkBoundaryAt(double dest_x, double dest_y, Actor* src)
 	return false;
 }
 
-bool StudentWorld::checkOverlapWith(double curr_x, double curr_y, std::string type, Actor* overlapped)
+bool StudentWorld::findNearest(double dest_x, double dest_y, std::string type, double &distance)
+{
+	if (type == "Penelope")
+	{
+		double p_x = m_player->getX();
+		double p_y = m_player->getY();
+
+		double x_difference = p_x - dest_x;
+		double y_difference = p_y - dest_y;
+
+		distance = (x_difference*x_difference) + (y_difference*y_difference);
+
+		return true;
+	}
+
+	list<Actor*>::iterator it = m_actorList.begin();
+
+	distance = -1;
+	double candidateDistance = -1;
+
+	while (it != m_actorList.end())
+	{
+		string actorType = (*it)->getType();
+		if (actorType == "SmartZombie" || actorType == "DumbZombie")
+			actorType = "Zombie";
+		if (actorType == type)
+		{
+			double other_x = (*it)->getX();
+			double other_y = (*it)->getY();
+
+			double x_difference = other_x - dest_x;
+			double y_difference = other_y - dest_y;
+
+			double candidateDistance = (x_difference*x_difference) + (y_difference*y_difference);
+
+			if (distance == -1)
+				distance = candidateDistance;
+			else if (candidateDistance < distance)
+				distance = candidateDistance;
+		}
+
+		it++;
+	}
+
+	if (it == m_actorList.begin())
+		return false;
+
+	return true;
+}
+
+bool StudentWorld::checkOverlapWith(double curr_x, double curr_y, std::string type, Actor* &overlapped)
 {
 	if (type == "Penelope")
 	{
@@ -230,7 +301,6 @@ bool StudentWorld::checkOverlapWith(double curr_x, double curr_y, std::string ty
 
 Actor* StudentWorld::createActor(Level::MazeEntry ge, double x, double y)
 {
-	int imageID = -1;
 	Actor* result = nullptr;
 	switch (ge)
 	{
@@ -245,7 +315,7 @@ Actor* StudentWorld::createActor(Level::MazeEntry ge, double x, double y)
 		break;
 	case Level::citizen:
 		//result = new Citizen(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
-		result = new Wall(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
+		result = new Citizen(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
 		break;
 	case Level::wall:
 		result = new Wall(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
@@ -257,17 +327,68 @@ Actor* StudentWorld::createActor(Level::MazeEntry ge, double x, double y)
 		//result = new Pit(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
 		break;
 	case Level::vaccine_goodie:
-		//result = new Vaccine(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
+		//result = new VaccineGoodie(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
 		break;
 	case Level::gas_can_goodie:
-		//result = new GasCan(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
+		//result = new GasCanGoodie(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
 		break;
 	case Level::landmine_goodie:
-		//result = new LandmineBox(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
+		//result = new LandmineGoodie(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
 		break;
 	}
+	
+	if (result != nullptr)
+		m_actorList.push_back(result);
 
 	return result;
+}
+
+Actor* StudentWorld::createActor(string type, double x, double y)
+{
+	Actor* result = nullptr;
+	Level::MazeEntry ge;
+	if (type == "Landmine")
+	{
+		//result = new Landmine(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
+		m_actorList.push_back(result);
+		return result;
+	}
+	else if (type == "Flame")
+	{
+		//result = new Flame(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
+		m_actorList.push_back(result);
+		return result;
+	}
+
+	else if (type == "Vomit")
+	{
+		//result = new Vomit(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
+		m_actorList.push_back(result);
+		return result;
+	}
+
+	if (type == "Penelope")
+		ge = Level::player;
+	else if (type == "SmartZombie")
+		ge = Level::smart_zombie;
+	else if (type == "DumbZombie")
+		ge = Level::dumb_zombie;
+	else if (type == "Citizen")
+		ge = Level::citizen;
+	else if (type == "Wall")
+		ge = Level::wall;
+	else if (type == "Exit")
+		ge = Level::exit;
+	else if (type == "Pit")
+		ge = Level::pit;
+	else if (type == "VaccineGoodie")
+		ge = Level::vaccine_goodie;
+	else if (type == "GasCanGoodie")
+		ge = Level::gas_can_goodie;
+	else if (type == "LandmineGoodie")
+		ge = Level::landmine_goodie;
+	
+	return createActor(ge,x,y);
 }
 
 

@@ -23,13 +23,15 @@ public:
 	void finishLevel();
 
 	int getNumCitizensLeft();
+	Actor* getPlayer();
 
 	bool checkBoundaryAt(double dest_x, double dest_y, Actor* src);
-	bool checkOverlapWith(double curr_x, double curr_y, std::string type, Actor* overlapped);
-	
-private:
+	bool checkOverlapWith(double curr_x, double curr_y, std::string type, Actor* &overlapped);
+	bool findNearest(double dest_x, double dest_y, std::string type, double &distance);
 	Actor* createActor(Level::MazeEntry ge, double startX, double startY);
+	Actor* createActor(string type, double startX, double startY);
 
+private:
 	list<Actor*> m_actorList;
 	Penelope* m_player;
 	int m_numCitizensLeft;
