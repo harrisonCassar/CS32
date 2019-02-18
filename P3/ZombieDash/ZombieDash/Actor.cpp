@@ -6,7 +6,7 @@
 
 //==============================================ACTORS's IMPLEMENTATIONS=============================================
 
-Actor::Actor(int imageID, double startX, double startY, int depth, StudentWorld* world, std::string type) : GraphObject(imageID, startX, startY, right, depth), m_isDead(false), m_world(world), m_type(type) {}
+Actor::Actor(int imageID, double startX, double startY, int direction, int depth, StudentWorld* world, std::string type) : GraphObject(imageID, startX, startY, direction, depth), m_isDead(false), m_isActive(false), m_world(world), m_type(type), m_isInfected(false), m_infectedCount(0) {}
 
 bool Actor::isDead()
 {
@@ -28,33 +28,40 @@ StudentWorld* Actor::getWorld()
 	return m_world;
 }
 
-//==============================================Characters's IMPLEMENTATIONS===========================================
-Character::Character(int imageID, double startX, double startY, int depth, StudentWorld* world, std::string type) : Actor(imageID, startX, startY, 0, world, type)
-{
-	m_isParalyzed = false;
-	m_isInfected = false;
-	m_infectedCount = 0;
-}
-
-bool Character::isInfected()
+bool Actor::isInfected()
 {
 	return m_isInfected;
 }
 
-
-int Character::getInfectedCount()
+int Actor::getInfectedCount()
 {
 	return m_infectedCount;
 }
 
-int Character::incInfectedCount()
+int Actor::incInfectedCount()
 {
 	return ++m_infectedCount;
 }
 
-bool Character::setInfected(bool value)
+bool Actor::setInfected(bool value)
 {
 	return m_isInfected = value;
+}
+
+bool Actor::isActive()
+{
+	return m_isActive;
+}
+
+bool Actor::setActive(bool value)
+{
+	return m_isActive = value;
+}
+
+//==============================================Characters's IMPLEMENTATIONS===========================================
+Character::Character(int imageID, double startX, double startY, int depth, StudentWorld* world, std::string type) : Actor(imageID, startX, startY, right, 0, world, type)
+{
+	m_isParalyzed = false;
 }
 
 bool Character::isParalyzed()
@@ -64,7 +71,7 @@ bool Character::isParalyzed()
 
 bool Character::setParalyzed(bool value)
 {
-	m_isParalyzed = value;
+	return m_isParalyzed = value;
 }
 
 //==============================================PENELOPE's IMPLEMENTATIONS===========================================
@@ -116,6 +123,7 @@ void Penelope::doSomething()
 
 	if (isInfected())
 	{
+		cerr << "InfectedCount: " << getInfectedCount() << endl;
 		if (incInfectedCount() >= 500)
 		{
 			setDead();
@@ -206,13 +214,13 @@ void Penelope::doSomething()
 
 //==============================================WALL's IMPLEMENTATIONS===============================================
 
-Wall::Wall(double startX, double startY, StudentWorld* world) : Actor(IID_WALL, startX, startY, 0, world, "Wall") {}
+Wall::Wall(double startX, double startY, StudentWorld* world) : Actor(IID_WALL, startX, startY, right, 0, world, "Wall") {}
 
 void Wall::doSomething() {}
 
 //==============================================EXIT's IMPLEMENTATIONS===============================================
 
-Exit::Exit(double startX, double startY, StudentWorld* world) : Actor(IID_EXIT, startX, startY, 1, world, "Exit") {}
+Exit::Exit(double startX, double startY, StudentWorld* world) : Actor(IID_EXIT, startX, startY, right, 1, world, "Exit") {}
 
 void Exit::doSomething()
 {
@@ -224,6 +232,8 @@ void Exit::doSomething()
 		temp->setDead();
 
 		getWorld()->playSound(SOUND_CITIZEN_SAVED);
+
+		getWorld()->decNumCitizensLeft();
 	}
 
 	else if (getWorld()->checkOverlapWith(getX(), getY(), "Penelope", temp) && getWorld()->getNumCitizensLeft() == 0)
@@ -240,8 +250,6 @@ void Citizen::doSomething()
 {
 	if (isDead())
 	{
-		getWorld()->playSound(SOUND_CITIZEN_DIE);
-		getWorld()->increaseScore(-1000);
 		return;
 	}
 
@@ -251,10 +259,20 @@ void Citizen::doSomething()
 		{
 			setDead();
 			getWorld()->playSound(SOUND_ZOMBIE_BORN);
-
+			getWorld()->decNumCitizensLeft();
 			getWorld()->increaseScore(-1000);
 
 			//introduce new Zombie (70% dumb, 30% smart)
+			if (randInt(1, 10) <= 7)
+			{
+				getWorld()->createActor("DumbZombie", getX(), getY(), right);
+				cerr << "created DUMB boi" << endl;
+			}
+			else
+			{
+				getWorld()->createActor("SmartZombie", getX(), getY(), right);
+				cerr << "created smart boi" << endl;
+			}
 
 			return;
 		}
@@ -271,8 +289,10 @@ void Citizen::doSomething()
 	double dist_p = -1;
 	double dist_z = -1;
 
-	getWorld()->findNearest(getX(), getY(), "Penelope", dist_p);
-	getWorld()->findNearest(getX(), getY(), "Zombie", dist_z);
+	Actor* throwaway = nullptr;
+
+	getWorld()->findNearest(getX(), getY(), "Penelope", dist_p, throwaway);
+	getWorld()->findNearest(getX(), getY(), "Zombie", dist_z, throwaway);
 	
 	if (((dist_z == -1) || (dist_p < dist_z)) && dist_p <= 80 * 80)
 	{
@@ -408,8 +428,8 @@ void Citizen::doSomething()
 		if (!(getWorld()->checkBoundaryAt(getX(), getY() + 2, this)))
 		{
 			double dist_candidate;
-			getWorld()->findNearest(getX(), getY() + 2, "Zombie", dist_candidate);
-			if (dist_candidate < dist_near)
+			getWorld()->findNearest(getX(), getY() + 2, "Zombie", dist_candidate, throwaway);
+			if (dist_candidate > dist_near)
 			{
 				dist_near = dist_candidate;
 				bestDir = up;
@@ -418,8 +438,8 @@ void Citizen::doSomething()
 		if (!(getWorld()->checkBoundaryAt(getX(), getY() - 2, this)))
 		{
 			double dist_candidate;
-			getWorld()->findNearest(getX(), getY() - 2, "Zombie", dist_candidate);
-			if (dist_candidate < dist_near)
+			getWorld()->findNearest(getX(), getY() - 2, "Zombie", dist_candidate, throwaway);
+			if (dist_candidate > dist_near)
 			{
 				dist_near = dist_candidate;
 				bestDir = down;
@@ -428,8 +448,8 @@ void Citizen::doSomething()
 		if (!(getWorld()->checkBoundaryAt(getX() + 2, getY(), this)))
 		{
 			double dist_candidate;
-			getWorld()->findNearest(getX() + 2, getY(), "Zombie", dist_candidate);
-			if (dist_candidate < dist_near)
+			getWorld()->findNearest(getX() + 2, getY(), "Zombie", dist_candidate, throwaway);
+			if (dist_candidate > dist_near)
 			{
 				dist_near = dist_candidate;
 				bestDir = right;
@@ -438,8 +458,8 @@ void Citizen::doSomething()
 		if (!(getWorld()->checkBoundaryAt(getX() - 2, getY(), this)))
 		{
 			double dist_candidate;
-			getWorld()->findNearest(getX() - 2, getY(), "Zombie", dist_candidate);
-			if (dist_candidate < dist_near)
+			getWorld()->findNearest(getX() - 2, getY(), "Zombie", dist_candidate, throwaway);
+			if (dist_candidate > dist_near)
 			{
 				dist_near = dist_candidate;
 				bestDir = left;
@@ -448,7 +468,6 @@ void Citizen::doSomething()
 
 		if (bestDir == -1)
 		{
-			cerr << "No good direction for me, the Citizen!" << endl;
 			return;
 		}
 		
@@ -469,7 +488,22 @@ void Citizen::doSomething()
 
 //==============================================ZOMBIE's IMPLEMENTATIONS===============================================
 
-Zombie::Zombie(double startX, double startY, StudentWorld* world, string type) : Character(IID_ZOMBIE, startX, startY, 0, world, type), m_movementPlanDist(0) {}
+Zombie::Zombie(double startX, double startY, StudentWorld* world, string type) : Character(IID_ZOMBIE, startX, startY, 0, world, type), m_movementPlan(0) {}
+
+int Zombie::getMovementPlan()
+{
+	return m_movementPlan;
+}
+
+int Zombie::setMovementPlan(int value)
+{
+	return m_movementPlan = value;
+}
+
+int Zombie::decMovementPlan()
+{
+	return --m_movementPlan;
+}
 
 //============================================DUMB ZOMBIE's IMPLEMENTATIONS===============================================
 
@@ -507,11 +541,11 @@ void DumbZombie::doSomething()
 		vomit_y = curr_y - SPRITE_HEIGHT;
 		break;
 	case left:
-		vomit_x = curr_x - SPRITE_HEIGHT;
+		vomit_x = curr_x - SPRITE_WIDTH;
 		vomit_y = curr_y;
 		break;
 	case right:
-		vomit_x = curr_x + SPRITE_HEIGHT;
+		vomit_x = curr_x + SPRITE_WIDTH;
 		vomit_y = curr_y;
 		break;
 	}
@@ -522,13 +556,249 @@ void DumbZombie::doSomething()
 	{
 		if (randInt(1, 3) == 1)
 		{
-			getWorld()->createActor("Vomit", vomit_x, vomit_y));
+			getWorld()->createActor("Vomit", vomit_x, vomit_y, dir);
 			getWorld()->playSound(SOUND_ZOMBIE_VOMIT);
 			return;
 		}
 	}
 
+	if (getMovementPlan() == 0)
+	{
+		setMovementPlan(randInt(3, 10));
 
+		switch (randInt(1, 4))
+		{
+		case 1:
+			setDirection(up);
+			break;
+		case 2:
+			setDirection(down);
+			break;
+		case 3:
+			setDirection(left);
+			break;
+		case 4:
+			setDirection(right);
+			break;
+		}
+	}
+
+	double dest_x;
+	double dest_y;
+
+	if (getDirection() == up)
+	{
+		dest_x = getX();
+		dest_y = getY() + 1;
+	}
+	else if (getDirection() == down)
+	{
+		dest_x = getX();
+		dest_y = getY() - 1;
+	}
+	else if (getDirection() == left)
+	{
+		dest_x = getX() - 1;
+		dest_y = getY();
+	}
+	else if (getDirection() == right)
+	{
+		dest_x = getX() + 1;
+		dest_y = getY();
+	}
+
+	if (!getWorld()->checkBoundaryAt(dest_x, dest_y, this))
+	{
+		moveTo(dest_x, dest_y);
+		decMovementPlan();
+	}
+	else
+		setMovementPlan(0);
 }
 
 //===========================================SMART ZOMBIE's IMPLEMENTATIONS===============================================
+SmartZombie::SmartZombie(double startX, double startY, StudentWorld* world) : Zombie(startX, startY, world, "SmartZombie") {}
+
+void SmartZombie::doSomething()
+{
+
+	if (isDead())
+		return;
+
+	if (isParalyzed())
+	{
+		setParalyzed(false);
+		return;
+	}
+	else
+		setParalyzed(true);
+
+	double curr_x = getX();
+	double curr_y = getY();
+
+	double vomit_x;
+	double vomit_y;
+
+	int dir = getDirection();
+
+	switch (dir)
+	{
+	case up:
+		vomit_x = curr_x;
+		vomit_y = curr_y + SPRITE_HEIGHT;
+		break;
+	case down:
+		vomit_x = curr_x;
+		vomit_y = curr_y - SPRITE_HEIGHT;
+		break;
+	case left:
+		vomit_x = curr_x - SPRITE_WIDTH;
+		vomit_y = curr_y;
+		break;
+	case right:
+		vomit_x = curr_x + SPRITE_WIDTH;
+		vomit_y = curr_y;
+		break;
+	}
+
+	Actor* overlapped = nullptr;
+
+	if (getWorld()->checkOverlapWith(vomit_x, vomit_y, "Penelope", overlapped) || getWorld()->checkOverlapWith(vomit_x, vomit_y, "Citizen", overlapped))
+	{
+		if (randInt(1, 3) == 1)
+		{
+			getWorld()->createActor("Vomit", vomit_x, vomit_y, dir);
+			getWorld()->playSound(SOUND_ZOMBIE_VOMIT);
+			return;
+		}
+	}
+
+	if (getMovementPlan() == 0)
+	{
+		setMovementPlan(randInt(3, 10));
+
+		double p_dist = -1;
+		double c_dist = -1;
+
+		double dist;
+
+		Actor* nearest_player = nullptr;
+		Actor* nearest_citizen = nullptr;
+		Actor* nearest = nullptr;
+		
+		getWorld()->findNearest(getX(), getY(), "Penelope", p_dist, nearest_player);
+		if (getWorld()->findNearest(getX(), getY(), "Citizen", c_dist, nearest_citizen) && c_dist <= p_dist)
+		{
+			dist = c_dist;
+			nearest = nearest_citizen;
+		}
+		else
+		{
+			dist = p_dist;
+			nearest = nearest_player;
+		}
+
+		if (dist <= 80)
+		{
+			double near_x = nearest->getX();
+			double near_y = nearest->getY();
+			int horizontalDir;
+			int verticalDir;
+
+			//set optimal vertical and horizontal directions
+			if (getY() > near_y)
+				verticalDir = up;
+			else
+				verticalDir = down;
+
+			if (getX() > near_x)
+				horizontalDir = left;
+			else
+				horizontalDir = right;
+			//set direction if same row/col, or randomly select which optimal direction
+			if (getX() == near_x)
+				setDirection(verticalDir);
+			else if (getY() == near_y)
+				setDirection(horizontalDir);
+			else
+			{
+				if (randInt(1, 2) == 1)
+					setDirection(verticalDir);
+				else
+					setDirection(horizontalDir);
+			}
+		}
+		else
+		{
+			switch (randInt(1, 4))
+			{
+			case 1:
+				setDirection(up);
+				break;
+			case 2:
+				setDirection(down);
+				break;
+			case 3:
+				setDirection(left);
+				break;
+			case 4:
+				setDirection(right);
+				break;
+			}
+		}
+	}
+
+	double dest_x;
+	double dest_y;
+
+	if (getDirection() == up)
+	{
+		dest_x = getX();
+		dest_y = getY() + 1;
+	}
+	else if (getDirection() == down)
+	{
+		dest_x = getX();
+		dest_y = getY() - 1;
+	}
+	else if (getDirection() == left)
+	{
+		dest_x = getX() - 1;
+		dest_y = getY();
+	}
+	else if (getDirection() == right)
+	{
+		dest_x = getX() + 1;
+		dest_y = getY();
+	}
+
+	if (!getWorld()->checkBoundaryAt(dest_x, dest_y, this))
+	{
+		moveTo(dest_x, dest_y);
+		decMovementPlan();
+	}
+	else
+		setMovementPlan(0);
+}
+
+
+//=============================================VOMIT's IMPLEMENTATIONS===============================================
+Vomit::Vomit(double startX, double startY, int direction, StudentWorld* world) : Actor(IID_VOMIT, startX, startY, direction, 0, world, "Vomit"), m_lifeTicks(0) {}
+
+void Vomit::doSomething()
+{
+	if (isDead())
+		return;
+
+	if (m_lifeTicks > 2)
+	{
+		setDead();
+		return;
+	}
+	else
+		m_lifeTicks++;
+
+	getWorld()->infectAllOverlapping(this);
+}
+
+//===============================================FLAME's IMPLEMENTATIONS===============================================
