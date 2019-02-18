@@ -266,12 +266,12 @@ void Citizen::doSomething()
 			if (randInt(1, 10) <= 7)
 			{
 				getWorld()->createActor("DumbZombie", getX(), getY(), right);
-				cerr << "created DUMB boi" << endl;
+				cerr << "Created DumbZombie" << endl;
 			}
 			else
 			{
 				getWorld()->createActor("SmartZombie", getX(), getY(), right);
-				cerr << "created smart boi" << endl;
+				cerr << "Created SmartZombie" << endl;
 			}
 
 			return;
@@ -621,7 +621,6 @@ SmartZombie::SmartZombie(double startX, double startY, StudentWorld* world) : Zo
 
 void SmartZombie::doSomething()
 {
-
 	if (isDead())
 		return;
 
@@ -685,7 +684,6 @@ void SmartZombie::doSomething()
 		Actor* nearest_player = nullptr;
 		Actor* nearest_citizen = nullptr;
 		Actor* nearest = nullptr;
-		
 		getWorld()->findNearest(getX(), getY(), "Penelope", p_dist, nearest_player);
 		if (getWorld()->findNearest(getX(), getY(), "Citizen", c_dist, nearest_citizen) && c_dist <= p_dist)
 		{
@@ -698,7 +696,9 @@ void SmartZombie::doSomething()
 			nearest = nearest_player;
 		}
 
-		if (dist <= 80)
+		cerr << dist << endl;
+
+		if (dist <= 80*80)
 		{
 			double near_x = nearest->getX();
 			double near_y = nearest->getY();
@@ -707,9 +707,9 @@ void SmartZombie::doSomething()
 
 			//set optimal vertical and horizontal directions
 			if (getY() > near_y)
-				verticalDir = up;
-			else
 				verticalDir = down;
+			else
+				verticalDir = up;
 
 			if (getX() > near_x)
 				horizontalDir = left;
@@ -717,15 +717,29 @@ void SmartZombie::doSomething()
 				horizontalDir = right;
 			//set direction if same row/col, or randomly select which optimal direction
 			if (getX() == near_x)
+			{
+				cerr << "same vert direction is: " << verticalDir << endl;
 				setDirection(verticalDir);
+			}
+				
 			else if (getY() == near_y)
+			{
+				cerr << "same hori direction is: " << horizontalDir << endl;
 				setDirection(horizontalDir);
+			}
+				
 			else
 			{
 				if (randInt(1, 2) == 1)
+				{
+					cerr << "vert direction is: " << verticalDir << endl;
 					setDirection(verticalDir);
+				}
 				else
+				{
+					cerr << "hori direction is: " << horizontalDir << endl;
 					setDirection(horizontalDir);
+				}
 			}
 		}
 		else

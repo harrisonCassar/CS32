@@ -242,7 +242,7 @@ bool StudentWorld::checkBoundaryAt(double dest_x, double dest_y, Actor* src)
 	return false;
 }
 
-bool StudentWorld::findNearest(double dest_x, double dest_y, std::string type, double &distance, Actor* nearest)
+bool StudentWorld::findNearest(double dest_x, double dest_y, std::string type, double &distance, Actor* &nearest)
 {
 	nearest = nullptr;
 
@@ -257,7 +257,6 @@ bool StudentWorld::findNearest(double dest_x, double dest_y, std::string type, d
 		distance = (x_difference*x_difference) + (y_difference*y_difference);
 
 		nearest = m_player;
-
 		return true;
 	}
 
@@ -465,7 +464,6 @@ void StudentWorld::infectAllOverlapping(Actor* src)
 		cerr << "Infecting Penelope!" << endl;
 		overlapped->setInfected(true);
 	}
-	cerr << "After dday." << endl;
 
 	while (it != m_actorList.end())
 	{
