@@ -63,9 +63,7 @@ int StudentWorld::init()
 		for (int y = 0; y < LEVEL_HEIGHT; y++)
 		{
 			for (int x = 0; x < LEVEL_WIDTH; x++)
-			{
-				cerr << x << " " << y << endl;
-				
+			{		
 				Level::MazeEntry ge = lev.getContentsOf(x, y);
 				if (ge == Level::citizen)
 					m_numCitizensLeft++;
@@ -170,6 +168,7 @@ int StudentWorld::getNumCitizensLeft()
 
 int StudentWorld::decNumCitizensLeft()
 {
+	cerr << "--NumCitizensLeft: " << m_numCitizensLeft - 1 << endl;
 	return --m_numCitizensLeft;
 }
 
@@ -233,6 +232,46 @@ bool StudentWorld::checkBoundaryAt(double dest_x, double dest_y, Actor* src)
 				if ((x_4 >= other_x_min && x_4 <= other_x_max) && (y_4 >= other_y_min && y_4 <= other_y_max))
 					return true;
 			}
+		}
+
+		it++;
+	}
+
+	return false;
+}
+
+bool StudentWorld::checkFireBoundaryAt(double dest_x, double dest_y)
+{
+	double x_1 = dest_x;
+	double y_1 = dest_y;
+	double x_2 = dest_x + SPRITE_WIDTH - 1;
+	double y_2 = dest_y;
+
+	double x_3 = dest_x + SPRITE_WIDTH - 1;
+	double y_3 = dest_y + SPRITE_HEIGHT - 1;
+	double x_4 = dest_x;
+	double y_4 = dest_y + SPRITE_HEIGHT - 1;
+
+	list<Actor*>::iterator it = m_actorList.begin();
+
+	while (it != m_actorList.end())
+	{
+		std::string type = (*it)->getType();
+		if (type == "Exit" || type == "Wall")
+		{
+			double other_x_min = (*it)->getX();
+			double other_y_min = (*it)->getY();
+			double other_x_max = other_x_min + SPRITE_WIDTH - 1;
+			double other_y_max = other_y_min + SPRITE_HEIGHT - 1;
+
+			if ((x_1 >= other_x_min && x_1 <= other_x_max) && (y_1 >= other_y_min && y_1 <= other_y_max))
+				return true;
+			if ((x_2 >= other_x_min && x_2 <= other_x_max) && (y_2 >= other_y_min && y_2 <= other_y_max))
+				return true;
+			if ((x_3 >= other_x_min && x_3 <= other_x_max) && (y_3 >= other_y_min && y_3 <= other_y_max))
+				return true;
+			if ((x_4 >= other_x_min && x_4 <= other_x_max) && (y_4 >= other_y_min && y_4 <= other_y_max))
+				return true;
 		}
 
 		it++;
@@ -318,8 +357,6 @@ bool StudentWorld::checkOverlapWith(double curr_x, double curr_y, std::string ty
 
 		double distance = (x_difference*x_difference) + (y_difference*y_difference);
 
-		//cerr << "xc: " << x_center << " yc: " << y_center << " dx: " << x_difference << " dy: " << y_difference << " dist: " << distance << endl;
-
 		if (distance <= 100.0)
 		{
 			overlapped = m_player;
@@ -401,7 +438,6 @@ Actor* StudentWorld::createActor(Level::MazeEntry ge, double x, double y)
 		m_actorList.push_back(result);
 
 	m_activeActors++;
-	cerr << "ACTIVE: " << m_activeActors << endl;
 	return result;
 }
 
@@ -414,7 +450,6 @@ Actor* StudentWorld::createActor(string type, double x, double y, int direction)
 		result = new Landmine(x,y, this);
 		m_actorList.push_back(result);
 		m_activeActors++;
-		cerr << "ACTIVE: " << m_activeActors << endl;
 		return result;
 	}
 	else if (type == "Flame")
@@ -422,7 +457,6 @@ Actor* StudentWorld::createActor(string type, double x, double y, int direction)
 		result = new Flame(x,y, direction, this);
 		m_actorList.push_back(result);
 		m_activeActors++;
-		cerr << "ACTIVE: " << m_activeActors << endl;
 		return result;
 	}
 
@@ -431,7 +465,6 @@ Actor* StudentWorld::createActor(string type, double x, double y, int direction)
 		result = new Vomit(x,y, direction, this);
 		m_actorList.push_back(result);
 		m_activeActors++;
-		cerr << "ACTIVE: " << m_activeActors << endl;
 		return result;
 	}
 
@@ -597,9 +630,9 @@ string StudentWorld::updateStatLine()
 	int magnitude = 0;
 	int scoreCopy;
 	if (score < 0)
-		score *= -1;
-
-	scoreCopy = score;
+		scoreCopy = score * -1;
+	else
+		scoreCopy = score;
 
 	for (; ;)
 	{
@@ -615,6 +648,7 @@ string StudentWorld::updateStatLine()
 	if (score < 0)
 	{
 		oss << "-";
+		score *= -1;
 		magnitude++;
 	}
 

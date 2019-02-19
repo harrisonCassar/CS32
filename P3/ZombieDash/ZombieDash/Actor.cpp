@@ -48,6 +48,11 @@ bool Actor::setInfected(bool value)
 	return m_isInfected = value;
 }
 
+int Actor::setInfectedCount(int value)
+{
+	return m_infectedCount = value;
+}
+
 bool Actor::isActive()
 {
 	return m_isActive;
@@ -193,6 +198,39 @@ void Penelope::doSomething()
 				getWorld()->playSound(SOUND_PLAYER_FIRE);
 
 				//Introduce three new flame objects into the game in front  of me
+				for (int i = 1; i < 4; i++)
+				{
+					double pos_x;
+					double pos_y;
+
+					if (getDirection() == up)
+					{
+						pos_x = getX();
+						pos_y = getY() + (i*SPRITE_HEIGHT);
+					}
+					else if (getDirection() == down)
+					{
+						pos_x = getX();
+						pos_y = getY() - (i*SPRITE_HEIGHT);
+					}
+					else if (getDirection() == left)
+					{
+						pos_x = getX() - (i*SPRITE_WIDTH);
+						pos_y = getY();
+					}
+					else if (getDirection() == right)
+					{
+						pos_x = getX() + (i*SPRITE_WIDTH);
+						pos_y = getY();
+					}
+
+					Actor* temp;
+
+					if (getWorld()->checkOverlapWith(pos_x, pos_y, "Wall", temp) || getWorld()->checkOverlapWith(pos_x, pos_y, "Exit", temp))
+						break;
+					else
+						getWorld()->createActor("Flame", pos_x, pos_y, getDirection());
+				}
 			}
 
 			break;
@@ -203,6 +241,7 @@ void Penelope::doSomething()
 				m_supplyLandmines--;
 
 				//Introduce landmine object on ground into the game
+				getWorld()->createActor("Landmine", getX(), getY(), right);
 			}
 
 			break;
@@ -213,7 +252,7 @@ void Penelope::doSomething()
 				m_supplyVaccines--;
 
 				setInfected(false);
-				//m_infectedCount = 0;
+				setInfectedCount(0);
 			}
 
 			break;
@@ -704,7 +743,13 @@ void SmartZombie::doSomething()
 			nearest = nearest_player;
 		}
 
-		cerr << dist << endl;
+		if (getWorld()->getNumCitizensLeft() == 0)
+		{
+			dist = p_dist;
+			nearest = nearest_player;
+		}
+
+		cerr << "p: " << p_dist << " c: " << c_dist << " dist: " << dist << endl;
 
 		if (dist <= 80*80)
 		{
@@ -726,13 +771,11 @@ void SmartZombie::doSomething()
 			//set direction if same row/col, or randomly select which optimal direction
 			if (getX() == near_x)
 			{
-				cerr << "same vert direction is: " << verticalDir << endl;
 				setDirection(verticalDir);
 			}
 				
 			else if (getY() == near_y)
 			{
-				cerr << "same hori direction is: " << horizontalDir << endl;
 				setDirection(horizontalDir);
 			}
 				
@@ -740,12 +783,10 @@ void SmartZombie::doSomething()
 			{
 				if (randInt(1, 2) == 1)
 				{
-					cerr << "vert direction is: " << verticalDir << endl;
 					setDirection(verticalDir);
 				}
 				else
 				{
-					cerr << "hori direction is: " << horizontalDir << endl;
 					setDirection(horizontalDir);
 				}
 			}
@@ -802,7 +843,6 @@ void SmartZombie::doSomething()
 	else
 		setMovementPlan(0);
 }
-
 
 //=============================================VOMIT's IMPLEMENTATIONS===============================================
 Vomit::Vomit(double startX, double startY, int direction, StudentWorld* world) : Actor(IID_VOMIT, startX, startY, direction, 0, world, "Vomit") {}
@@ -907,15 +947,24 @@ void Landmine::doSomething()
 			getWorld()->playSound(SOUND_LANDMINE_EXPLODE);
 
 			//introduce flames at and around landmine's position
-			getWorld()->createActor("Flame", getX() - SPRITE_WIDTH, getY() + SPRITE_HEIGHT, up);
-			getWorld()->createActor("Flame", getX(), getY() + SPRITE_HEIGHT, up);
-			getWorld()->createActor("Flame", getX() + SPRITE_WIDTH, getY() + SPRITE_HEIGHT, up);
-			getWorld()->createActor("Flame", getX() - SPRITE_WIDTH, getY(), up);
-			getWorld()->createActor("Flame", getX(), getY(), up);
-			getWorld()->createActor("Flame", getX() + SPRITE_WIDTH, getY(), up);
-			getWorld()->createActor("Flame", getX() - SPRITE_WIDTH, getY() - SPRITE_HEIGHT, up);
-			getWorld()->createActor("Flame", getX(), getY() - SPRITE_HEIGHT, up);
-			getWorld()->createActor("Flame", getX() + SPRITE_WIDTH, getY() - SPRITE_HEIGHT, up);
+			if (!getWorld()->checkFireBoundaryAt(getX() - SPRITE_WIDTH, getY() + SPRITE_HEIGHT))
+				getWorld()->createActor("Flame", getX() - SPRITE_WIDTH, getY() + SPRITE_HEIGHT, up);
+			if (!getWorld()->checkFireBoundaryAt(getX(), getY() + SPRITE_HEIGHT))
+				getWorld()->createActor("Flame", getX(), getY() + SPRITE_HEIGHT, up);
+			if (!getWorld()->checkFireBoundaryAt(getX() + SPRITE_WIDTH, getY() + SPRITE_HEIGHT))
+				getWorld()->createActor("Flame", getX() + SPRITE_WIDTH, getY() + SPRITE_HEIGHT, up);
+			if (!getWorld()->checkFireBoundaryAt(getX() - SPRITE_WIDTH, getY()))
+				getWorld()->createActor("Flame", getX() - SPRITE_WIDTH, getY(), up);
+			if (!getWorld()->checkFireBoundaryAt(getX(), getY()))
+				getWorld()->createActor("Flame", getX(), getY(), up);
+			if (!getWorld()->checkFireBoundaryAt(getX() + SPRITE_WIDTH, getY()))
+				getWorld()->createActor("Flame", getX() + SPRITE_WIDTH, getY(), up);
+			if (!getWorld()->checkFireBoundaryAt(getX() - SPRITE_WIDTH, getY() - SPRITE_HEIGHT))
+				getWorld()->createActor("Flame", getX() - SPRITE_WIDTH, getY() - SPRITE_HEIGHT, up);
+			if (!getWorld()->checkFireBoundaryAt(getX(), getY() - SPRITE_HEIGHT))
+				getWorld()->createActor("Flame", getX(), getY() - SPRITE_HEIGHT, up);
+			if (!getWorld()->checkFireBoundaryAt(getX() + SPRITE_WIDTH, getY() - SPRITE_HEIGHT))
+				getWorld()->createActor("Flame", getX() + SPRITE_WIDTH, getY() - SPRITE_HEIGHT, up);
 
 			//introduce pit at landmine's positon
 			getWorld()->createActor("Pit", getX(), getY(), up);
@@ -935,15 +984,24 @@ void Landmine::doSomething()
 		getWorld()->playSound(SOUND_LANDMINE_EXPLODE);
 
 		//introduce flames at and around landmine's position
-		getWorld()->createActor("Flame", getX() - SPRITE_WIDTH, getY() + SPRITE_HEIGHT, up);
-		getWorld()->createActor("Flame", getX(), getY() + SPRITE_HEIGHT, up);
-		getWorld()->createActor("Flame", getX() + SPRITE_WIDTH, getY() + SPRITE_HEIGHT, up);
-		getWorld()->createActor("Flame", getX() - SPRITE_WIDTH, getY(), up);
-		getWorld()->createActor("Flame", getX(), getY(), up);
-		getWorld()->createActor("Flame", getX() + SPRITE_WIDTH, getY(), up);
-		getWorld()->createActor("Flame", getX() - SPRITE_WIDTH, getY() - SPRITE_HEIGHT, up);
-		getWorld()->createActor("Flame", getX(), getY() - SPRITE_HEIGHT, up);
-		getWorld()->createActor("Flame", getX() + SPRITE_WIDTH, getY() - SPRITE_HEIGHT, up);
+		if (!getWorld()->checkFireBoundaryAt(getX() - SPRITE_WIDTH, getY() + SPRITE_HEIGHT))
+			getWorld()->createActor("Flame", getX() - SPRITE_WIDTH, getY() + SPRITE_HEIGHT, up);
+		if (!getWorld()->checkFireBoundaryAt(getX(), getY() + SPRITE_HEIGHT))
+			getWorld()->createActor("Flame", getX(), getY() + SPRITE_HEIGHT, up);
+		if (!getWorld()->checkFireBoundaryAt(getX() + SPRITE_WIDTH, getY() + SPRITE_HEIGHT))
+			getWorld()->createActor("Flame", getX() + SPRITE_WIDTH, getY() + SPRITE_HEIGHT, up);
+		if (!getWorld()->checkFireBoundaryAt(getX() - SPRITE_WIDTH, getY()))
+			getWorld()->createActor("Flame", getX() - SPRITE_WIDTH, getY(), up);
+		if (!getWorld()->checkFireBoundaryAt(getX(), getY()))
+			getWorld()->createActor("Flame", getX(), getY(), up);
+		if (!getWorld()->checkFireBoundaryAt(getX() + SPRITE_WIDTH, getY()))
+			getWorld()->createActor("Flame", getX() + SPRITE_WIDTH, getY(), up);
+		if (!getWorld()->checkFireBoundaryAt(getX() - SPRITE_WIDTH, getY() - SPRITE_HEIGHT))
+			getWorld()->createActor("Flame", getX() - SPRITE_WIDTH, getY() - SPRITE_HEIGHT, up);
+		if (!getWorld()->checkFireBoundaryAt(getX(), getY() - SPRITE_HEIGHT))
+			getWorld()->createActor("Flame", getX(), getY() - SPRITE_HEIGHT, up);
+		if (!getWorld()->checkFireBoundaryAt(getX() + SPRITE_WIDTH, getY() - SPRITE_HEIGHT))
+			getWorld()->createActor("Flame", getX() + SPRITE_WIDTH, getY() - SPRITE_HEIGHT, up);
 
 		//introduce pit at landmine's positon
 		getWorld()->createActor("Pit", getX(), getY(), up);

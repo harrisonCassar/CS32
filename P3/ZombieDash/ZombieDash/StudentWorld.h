@@ -27,6 +27,7 @@ public:
 	Actor* getPlayer();
 
 	bool checkBoundaryAt(double dest_x, double dest_y, Actor* src);
+	bool checkFireBoundaryAt(double dest_x, double dest_y);
 	bool checkOverlapWith(double curr_x, double curr_y, std::string type, Actor* &overlapped);
 	bool checkSpecificOverlapWith(double curr_x, double curr_y, Actor* overlapped);
 	bool findNearest(double dest_x, double dest_y, std::string type, double &distance, Actor* &nearest);

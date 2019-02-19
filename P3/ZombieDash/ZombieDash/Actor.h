@@ -19,6 +19,7 @@ public:
 	bool setActive(bool value);
 	int getInfectedCount();
 	int incInfectedCount();
+	int setInfectedCount(int value);
 	int getLifeTicks();
 	int incLifeTicks();
 	std::string getType();
