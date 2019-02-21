@@ -10,40 +10,53 @@ class StudentWorld;
 class Actor : public GraphObject
 {
 public:
-	Actor(int imageID, double startX, double startY, int direction, int depth, StudentWorld* world, std::string type);
+	Actor(int imageID, double startX, double startY, int direction, int depth, StudentWorld* world);
 	bool isDead();
 	void setDead();
+	
 	bool isInfected();
 	bool setInfected(bool value);
+	virtual bool isInfectable(); //RECENTLY ADDED
+
 	bool isActive();
 	bool setActive(bool value);
-	int getInfectedCount();
-	int incInfectedCount();
-	int setInfectedCount(int value);
+
+	virtual bool isDamageable();
+	virtual void killByFire();
+	virtual void killByPit(); //======maybe can combine killByFire and killByPit
+	
+	virtual bool blocksMovement();
+	virtual bool blocksFire();
+	
 	int getLifeTicks();
-	int incLifeTicks();
-	std::string getType();
+	int setLifeTicks(int value);
+
 	StudentWorld* getWorld();
 	virtual void doSomething() = 0;
+
 private:
-	std::string m_type;
+	StudentWorld* m_world;
+	
 	bool m_isDead;
 	bool m_isActive;
 	int m_lifeTicks;
 	bool m_isInfected;
-	int m_infectedCount;
-	StudentWorld* m_world;
 };
 
 class Character : public Actor
 {
 public:
-	Character(int imageID, double startX, double startY, int depth, StudentWorld* world, std::string type);
+	Character(int imageID, double startX, double startY, int depth, StudentWorld* world);
 	bool isParalyzed();
 	bool setParalyzed(bool value);
-	
+	int getInfectedCount();  //RECENTLY MOVED HERE
+	int setInfectedCount(int value);  //RECENTLY MOVED HERE
+
+	virtual bool blocksMovement();
+	virtual bool isDamageable();
 private:
 	bool m_isParalyzed;
+	int m_infectedCount; //RECENTLY MOVED HERE
 };
 
 class Penelope : public Character
@@ -51,6 +64,8 @@ class Penelope : public Character
 public:
 	Penelope(double startX, double startY, StudentWorld* world);
 	virtual void doSomething();
+
+	virtual bool isInfectable(); //RECENTLY ADDED
 
 	//accessor functions
 	int getSupplyLandmines();
@@ -72,6 +87,8 @@ class Wall : public Actor
 public:
 	Wall(double startX, double startY, StudentWorld* world);
 	virtual void doSomething();
+	virtual bool blocksMovement();
+	virtual bool blocksFire();
 };
 
 class Exit : public Actor
@@ -79,6 +96,7 @@ class Exit : public Actor
 public:
 	Exit(double startX, double startY, StudentWorld* world);
 	virtual void doSomething();
+	virtual bool blocksFire();
 };
 
 class Citizen : public Character
@@ -86,13 +104,14 @@ class Citizen : public Character
 public:
 	Citizen(double startX, double startY, StudentWorld* world);
 	virtual void doSomething();
+	virtual bool isInfectable(); //RECENTLY ADDED
 private:
 };
 
 class Zombie : public Character
 {
 public:
-	Zombie(double startX, double startY, StudentWorld* world, std::string type);
+	Zombie(double startX, double startY, StudentWorld* world);
 	virtual void doSomething() = 0;
 	int getMovementPlan();
 	int setMovementPlan(int value);
@@ -139,28 +158,31 @@ public:
 class Goodie : public Actor
 {
 public:
-	Goodie(int imageID, double startX, double startY, StudentWorld* world, std::string type);
+	Goodie(int imageID, double startX, double startY, StudentWorld* world);
 	virtual void doSomething();
-private:
-	std::string m_type;
+	virtual void updateSupply() = 0;
+	virtual bool isDamageable();
 };
 
 class VaccineGoodie : public Goodie
 {
 public:
 	VaccineGoodie(double startX, double startY, StudentWorld* world);
+	virtual void updateSupply();
 };
 
 class GasCanGoodie : public Goodie
 {
 public:
 	GasCanGoodie(double startX, double startY, StudentWorld* world);
+	virtual void updateSupply();
 };
 
 class LandmineGoodie : public Goodie
 {
 public:
 	LandmineGoodie(double startX, double startY, StudentWorld* world);
+	virtual void updateSupply();
 };
 
 class Landmine : public Actor
@@ -172,7 +194,5 @@ public:
 private:
 	int m_safetyTicks;
 };
-
-// Students:  Add code to this file, Actor.cpp, StudentWorld.h, and StudentWorld.cpp
 
 #endif // ACTOR_H_

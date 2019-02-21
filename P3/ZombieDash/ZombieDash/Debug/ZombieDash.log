@@ -1,2 +1,15 @@
-﻿  StudentWorld.cpp
-  ZombieDash.vcxproj -> D:\GitHub\CS32\P3\ZombieDash\Debug\ZombieDash.exe
+﻿  Actor.cpp
+d:\github\cs32\p3\zombiedash\zombiedash\actor.cpp(9): error C2511: 'Actor::Actor(int,double,double,int,int,StudentWorld *,std::string)': overloaded member function not found in 'Actor'
+  d:\github\cs32\p3\zombiedash\zombiedash\actor.h(10): note: see declaration of 'Actor'
+d:\github\cs32\p3\zombiedash\zombiedash\actor.cpp(9): error C2550: 'Actor::{ctor}': constructor initializer lists are only allowed on constructor definitions
+d:\github\cs32\p3\zombiedash\zombiedash\actor.cpp(23): error C2065: 'm_type': undeclared identifier
+d:\github\cs32\p3\zombiedash\zombiedash\actor.cpp(77): error C2661: 'Actor::Actor': no overloaded function takes 7 arguments
+d:\github\cs32\p3\zombiedash\zombiedash\actor.cpp(265): error C2661: 'Actor::Actor': no overloaded function takes 7 arguments
+d:\github\cs32\p3\zombiedash\zombiedash\actor.cpp(271): error C2661: 'Actor::Actor': no overloaded function takes 7 arguments
+d:\github\cs32\p3\zombiedash\zombiedash\actor.cpp(848): error C2661: 'Actor::Actor': no overloaded function takes 7 arguments
+d:\github\cs32\p3\zombiedash\zombiedash\actor.cpp(867): error C2661: 'Actor::Actor': no overloaded function takes 7 arguments
+d:\github\cs32\p3\zombiedash\zombiedash\actor.cpp(886): error C2661: 'Actor::Actor': no overloaded function takes 7 arguments
+d:\github\cs32\p3\zombiedash\zombiedash\actor.cpp(894): error C2661: 'Actor::Actor': no overloaded function takes 7 arguments
+d:\github\cs32\p3\zombiedash\zombiedash\actor.cpp(925): error C2661: 'Actor::Actor': no overloaded function takes 7 arguments
+  StudentWorld.cpp
+  Generating Code...

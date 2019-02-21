@@ -35,7 +35,10 @@ public:
 	Actor* createActor(string type, double startX, double startY, int direction);
 
 	string updateStatLine();
-	void updateGoodies(string type);
+	void updateGoodies(string type); //REMOVE THISSSSS
+	void updateVaccineSupply(int value);
+	void updateFlamethrowerSupply(int value);
+	void updateLandmineSupply(int value);
 
 	void activateAllActors();
 

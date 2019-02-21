@@ -6,7 +6,7 @@
 
 //==============================================ACTORS's IMPLEMENTATIONS=============================================
 
-Actor::Actor(int imageID, double startX, double startY, int direction, int depth, StudentWorld* world, std::string type) : GraphObject(imageID, startX, startY, direction, depth), m_isDead(false), m_isActive(false), m_world(world), m_type(type), m_isInfected(false), m_infectedCount(0), m_lifeTicks(0) {}
+Actor::Actor(int imageID, double startX, double startY, int direction, int depth, StudentWorld* world) : GraphObject(imageID, startX, startY, direction, depth), m_world(world), m_isDead(false), m_isActive(false), m_isInfected(false), m_lifeTicks(0) {}
 
 bool Actor::isDead()
 {
@@ -16,11 +16,6 @@ bool Actor::isDead()
 void Actor::setDead()
 {
 	m_isDead = true;
-}
-
-std::string Actor::getType()
-{
-	return m_type;
 }
 
 StudentWorld* Actor::getWorld()
@@ -33,24 +28,14 @@ bool Actor::isInfected()
 	return m_isInfected;
 }
 
-int Actor::getInfectedCount()
-{
-	return m_infectedCount;
-}
-
-int Actor::incInfectedCount()
-{
-	return ++m_infectedCount;
-}
-
 bool Actor::setInfected(bool value)
 {
 	return m_isInfected = value;
 }
 
-int Actor::setInfectedCount(int value)
+bool Actor::isInfectable()
 {
-	return m_infectedCount = value;
+	return false;
 }
 
 bool Actor::isActive()
@@ -63,21 +48,43 @@ bool Actor::setActive(bool value)
 	return m_isActive = value;
 }
 
+bool Actor::isDamageable()
+{
+	return false;
+}
+
+void Actor::killByFire() //======maybe can combine killByFire and killByPit
+{
+	return;
+}
+
+void Actor::killByPit()
+{
+	return;
+}
+
+bool Actor::blocksMovement()
+{
+	false;
+}
+
+bool Actor::blocksFire()
+{
+	return false;
+}
+
 int Actor::getLifeTicks()
 {
 	return m_lifeTicks;
 }
 
-int Actor::incLifeTicks()
+int Actor::setLifeTicks(int value)
 {
-	return ++m_lifeTicks;
+	return m_lifeTicks = value;
 }
 
 //==============================================Characters's IMPLEMENTATIONS===========================================
-Character::Character(int imageID, double startX, double startY, int depth, StudentWorld* world, std::string type) : Actor(imageID, startX, startY, right, 0, world, type)
-{
-	m_isParalyzed = false;
-}
+Character::Character(int imageID, double startX, double startY, int depth, StudentWorld* world) : Actor(imageID, startX, startY, right, 0, world), m_isParalyzed(false), m_infectedCount(0) {}
 
 bool Character::isParalyzed()
 {
@@ -89,14 +96,39 @@ bool Character::setParalyzed(bool value)
 	return m_isParalyzed = value;
 }
 
+int Character::getInfectedCount()
+{
+	return m_infectedCount;
+}
+
+int Character::setInfectedCount(int value)
+{
+	return m_infectedCount = value;
+}
+
+bool Character::blocksMovement()
+{
+	return true;
+}
+
+bool Character::isDamageable()
+{
+	return true;
+}
+
 //==============================================PENELOPE's IMPLEMENTATIONS===========================================
 
 //constructor
-Penelope::Penelope(double startX, double startY, StudentWorld* world) : Character(IID_PLAYER, startX, startY,0,world, "Penelope")
+Penelope::Penelope(double startX, double startY, StudentWorld* world) : Character(IID_PLAYER, startX, startY,0,world)
 {
 	m_supplyLandmines = 0;
 	m_supplyFlamethrower = 0;
 	m_supplyVaccines = 0;
+}
+
+bool Penelope::isInfectable()
+{
+	return true;
 }
 
 //accessor function implementations
@@ -262,13 +294,23 @@ void Penelope::doSomething()
 
 //==============================================WALL's IMPLEMENTATIONS===============================================
 
-Wall::Wall(double startX, double startY, StudentWorld* world) : Actor(IID_WALL, startX, startY, right, 0, world, "Wall") {}
+Wall::Wall(double startX, double startY, StudentWorld* world) : Actor(IID_WALL, startX, startY, right, 0, world) {}
 
 void Wall::doSomething() {}
 
+bool Wall::blocksMovement()
+{
+	return true;
+}
+
+bool Wall::blocksFire()
+{
+	return true;
+}
+
 //==============================================EXIT's IMPLEMENTATIONS===============================================
 
-Exit::Exit(double startX, double startY, StudentWorld* world) : Actor(IID_EXIT, startX, startY, right, 1, world, "Exit") {}
+Exit::Exit(double startX, double startY, StudentWorld* world) : Actor(IID_EXIT, startX, startY, right, 1, world) {}
 
 void Exit::doSomething()
 {
@@ -289,9 +331,14 @@ void Exit::doSomething()
 	}
 }
 
+bool Exit::blocksFire()
+{
+	return true;
+}
+
 //==============================================CITIZEN's IMPLEMENTATIONS===============================================
 
-Citizen::Citizen(double startX, double startY, StudentWorld* world) : Character(IID_CITIZEN, startX, startY, 0, world, "Citizen") {}
+Citizen::Citizen(double startX, double startY, StudentWorld* world) : Character(IID_CITIZEN, startX, startY, 0, world) {}
 
 void Citizen::doSomething()
 {
@@ -533,9 +580,14 @@ void Citizen::doSomething()
 	}
 }
 
+bool Citizen::isInfectable()
+{
+	return true;
+}
+
 //==============================================ZOMBIE's IMPLEMENTATIONS===============================================
 
-Zombie::Zombie(double startX, double startY, StudentWorld* world, string type) : Character(IID_ZOMBIE, startX, startY, 0, world, type), m_movementPlan(0) {}
+Zombie::Zombie(double startX, double startY, StudentWorld* world) : Character(IID_ZOMBIE, startX, startY, 0, world), m_movementPlan(0) {}
 
 int Zombie::getMovementPlan()
 {
@@ -554,7 +606,7 @@ int Zombie::decMovementPlan()
 
 //============================================DUMB ZOMBIE's IMPLEMENTATIONS===============================================
 
-DumbZombie::DumbZombie(double startX, double startY, StudentWorld* world) : Zombie(startX, startY, world, "DumbZombie") {}
+DumbZombie::DumbZombie(double startX, double startY, StudentWorld* world) : Zombie(startX, startY, world) {}
 
 void DumbZombie::doSomething()
 {
@@ -664,7 +716,7 @@ void DumbZombie::doSomething()
 }
 
 //===========================================SMART ZOMBIE's IMPLEMENTATIONS===============================================
-SmartZombie::SmartZombie(double startX, double startY, StudentWorld* world) : Zombie(startX, startY, world, "SmartZombie") {}
+SmartZombie::SmartZombie(double startX, double startY, StudentWorld* world) : Zombie(startX, startY, world) {}
 
 void SmartZombie::doSomething()
 {
@@ -845,7 +897,7 @@ void SmartZombie::doSomething()
 }
 
 //=============================================VOMIT's IMPLEMENTATIONS===============================================
-Vomit::Vomit(double startX, double startY, int direction, StudentWorld* world) : Actor(IID_VOMIT, startX, startY, direction, 0, world, "Vomit") {}
+Vomit::Vomit(double startX, double startY, int direction, StudentWorld* world) : Actor(IID_VOMIT, startX, startY, direction, 0, world) {}
 
 void Vomit::doSomething()
 {
@@ -864,7 +916,7 @@ void Vomit::doSomething()
 }
 
 //===============================================FLAME's IMPLEMENTATIONS===============================================
-Flame::Flame(double startX, double startY, int direction, StudentWorld* world) : Actor(IID_FLAME, startX, startY, direction, 0, world, "Flame") {}
+Flame::Flame(double startX, double startY, int direction, StudentWorld* world) : Actor(IID_FLAME, startX, startY, direction, 0, world) {}
 
 void Flame::doSomething()
 {
@@ -883,7 +935,7 @@ void Flame::doSomething()
 }
 
 //===============================================PIT's IMPLEMENTATIONS===============================================
-Pit::Pit(double startX, double startY, StudentWorld* world) : Actor(IID_PIT, startX, startY, right, 0, world, "Pit") {}
+Pit::Pit(double startX, double startY, StudentWorld* world) : Actor(IID_PIT, startX, startY, right, 0, world) {}
 
 void Pit::doSomething()
 {
@@ -891,7 +943,7 @@ void Pit::doSomething()
 }
 
 //===============================================GOODIE's IMPLEMENTATIONS===============================================
-Goodie::Goodie(int imageID, double startX, double startY, StudentWorld* world, string type) : Actor(imageID, startX, startY, right, 1, world, "Goodie"), m_type(type) {}
+Goodie::Goodie(int imageID, double startX, double startY, StudentWorld* world) : Actor(imageID, startX, startY, right, 1, world) {}
 
 void Goodie::doSomething()
 {
@@ -908,18 +960,38 @@ void Goodie::doSomething()
 
 		getWorld()->playSound(SOUND_GOT_GOODIE);
 
-		getWorld()->updateGoodies(m_type);
+		updateSupply();
 	}
 }
 
+bool Goodie::isDamageable()
+{
+	return true;
+}
+
 //===============================================VACCINE GOODIE's IMPLEMENTATIONS===============================================
-VaccineGoodie::VaccineGoodie(double startX, double startY, StudentWorld* world) : Goodie(IID_VACCINE_GOODIE, startX, startY, world, "VaccineGoodie") {}
+VaccineGoodie::VaccineGoodie(double startX, double startY, StudentWorld* world) : Goodie(IID_VACCINE_GOODIE, startX, startY, world) {}
+
+void VaccineGoodie::updateSupply()
+{
+	getWorld()->updateVaccineSupply(1);
+}
 
 //===============================================GAS CAN GOODIE's IMPLEMENTATIONS===============================================
-GasCanGoodie::GasCanGoodie(double startX, double startY, StudentWorld* world) : Goodie(IID_GAS_CAN_GOODIE, startX, startY, world, "GasCanGoodie") {}
+GasCanGoodie::GasCanGoodie(double startX, double startY, StudentWorld* world) : Goodie(IID_GAS_CAN_GOODIE, startX, startY, world) {}
+
+void GasCanGoodie::updateSupply()
+{
+	getWorld()->updateFlamethrowerSupply(5);
+}
 
 //===============================================LANDMINE GOODIE's IMPLEMENTATIONS===============================================
-LandmineGoodie::LandmineGoodie(double startX, double startY, StudentWorld* world) : Goodie(IID_LANDMINE_GOODIE, startX, startY, world, "LandmineGoodie") {}
+LandmineGoodie::LandmineGoodie(double startX, double startY, StudentWorld* world) : Goodie(IID_LANDMINE_GOODIE, startX, startY, world) {}
+
+void LandmineGoodie::updateSupply()
+{
+	getWorld()->updateLandmineSupply(2);
+}
 
 //==================================================LANDMINE's IMPLEMENTATIONS===============================================
 Landmine::Landmine(double startX, double startY, StudentWorld* world) : Actor(IID_LANDMINE, startX, startY, right, 1, world, "Landmine"), m_safetyTicks(30) {}
