@@ -711,8 +711,6 @@ void DumbZombie::doSomething()
 		break;
 	}
 
-	Actor* overlapped = nullptr;
-
 	if (getWorld()->checkOverlapWithInfectable(vomit_x, vomit_y))
 	{
 		if (randInt(1, 3) == 1)
