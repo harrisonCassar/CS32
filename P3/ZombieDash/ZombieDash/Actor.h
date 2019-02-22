@@ -22,11 +22,17 @@ public:
 	bool setActive(bool value);
 
 	virtual bool isDamageable();
-	virtual void killByFire();
-	virtual void killByPit(); //======maybe can combine killByFire and killByPit
+	virtual void killByHazard();
+	//virtual void killByPit(); //======maybe can combine killByFire and killByPit
 	
 	virtual bool blocksMovement();
 	virtual bool blocksFire();
+
+	virtual bool isSavable();
+	virtual bool isFriendly();
+	virtual bool isEvil();
+	virtual bool canPickUp();
+	virtual bool canActivateTraps();
 	
 	int getLifeTicks();
 	int setLifeTicks(int value);
@@ -52,6 +58,7 @@ public:
 	int getInfectedCount();  //RECENTLY MOVED HERE
 	int setInfectedCount(int value);  //RECENTLY MOVED HERE
 
+	virtual bool canActivateTraps();
 	virtual bool blocksMovement();
 	virtual bool isDamageable();
 private:
@@ -64,6 +71,10 @@ class Penelope : public Character
 public:
 	Penelope(double startX, double startY, StudentWorld* world);
 	virtual void doSomething();
+	virtual void killByHazard();
+
+	virtual bool isFriendly();
+	virtual bool canPickUp();
 
 	virtual bool isInfectable(); //RECENTLY ADDED
 
@@ -105,6 +116,9 @@ public:
 	Citizen(double startX, double startY, StudentWorld* world);
 	virtual void doSomething();
 	virtual bool isInfectable(); //RECENTLY ADDED
+	virtual void killByHazard();
+	virtual bool isFriendly();
+	virtual bool isSavable();
 private:
 };
 
@@ -116,6 +130,7 @@ public:
 	int getMovementPlan();
 	int setMovementPlan(int value);
 	int decMovementPlan();
+	virtual bool isEvil();
 private:
 	int m_movementPlan;
 };
@@ -125,6 +140,7 @@ class DumbZombie : public Zombie
 public:
 	DumbZombie(double startX, double startY, StudentWorld* world);
 	virtual void doSomething();
+	virtual void killByHazard();
 };
 
 class SmartZombie : public Zombie
@@ -132,6 +148,7 @@ class SmartZombie : public Zombie
 public:
 	SmartZombie(double startX, double startY, StudentWorld* world);
 	virtual void doSomething();
+	virtual void killByHazard();
 };
 
 class Vomit : public Actor
@@ -162,6 +179,7 @@ public:
 	virtual void doSomething();
 	virtual void updateSupply() = 0;
 	virtual bool isDamageable();
+	virtual void killByHazard();
 };
 
 class VaccineGoodie : public Goodie
@@ -191,6 +209,7 @@ public:
 	Landmine(double startX, double startY, StudentWorld* world);
 	virtual void doSomething();
 	bool isOnSafety();
+	virtual void killByHazard();
 private:
 	int m_safetyTicks;
 };

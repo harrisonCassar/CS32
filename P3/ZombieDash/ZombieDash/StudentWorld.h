@@ -28,14 +28,28 @@ public:
 
 	bool checkBoundaryAt(double dest_x, double dest_y, Actor* src);
 	bool checkFireBoundaryAt(double dest_x, double dest_y);
-	bool checkOverlapWith(double curr_x, double curr_y, std::string type, Actor* &overlapped);
-	bool checkSpecificOverlapWith(double curr_x, double curr_y, Actor* overlapped);
-	bool findNearest(double dest_x, double dest_y, std::string type, double &distance, Actor* &nearest);
+
+	bool checkOverlapWithDamageable(Actor* src, Actor* other);
+	bool checkOverlapWithSavable(Actor* src, Actor* &overlapped);
+	bool checkOverlapWithCanPickup(Actor* src);
+	bool checkOverlapWithCanActivateTraps(Actor* src);
+	bool checkOverlapWithInfectable(double x_pos, double y_pos);
+	bool checkOverlapWithInfectable(Actor* src, Actor* other);
+	bool checkOverlapWithBlocksFire(double x_pos, double y_pos);
+
+	bool checkOverlap(Actor* src, Actor* other);
+	bool checkOverlap(double x_pos, double y_pos, Actor* other);
+
+	bool findNearestPlayer(double dest_x, double dest_y, double &distance, Actor* &nearest);
+	bool findNearestEvil(double dest_x, double dest_y, double &distance, Actor* &nearest);
+	bool findNearestFriendly(double dest_x, double dest_y, double &distance, Actor* &nearest); //this does not include checks for Player, even though it is Friendly
+
+	double calculateDistance(double x_src, double y_src, double x_other, double y_other);
+
 	Actor* createActor(Level::MazeEntry ge, double startX, double startY);
-	Actor* createActor(string type, double startX, double startY, int direction);
+	void addActor(Actor* created);
 
 	string updateStatLine();
-	void updateGoodies(string type); //REMOVE THISSSSS
 	void updateVaccineSupply(int value);
 	void updateFlamethrowerSupply(int value);
 	void updateLandmineSupply(int value);
@@ -45,7 +59,6 @@ public:
 	void infectAllOverlapping(Actor* src);
 	void damageAllOverlapping(Actor* src);
 	
-
 private:
 	list<Actor*> m_actorList;
 	Penelope* m_player;

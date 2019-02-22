@@ -10,8 +10,6 @@ GameWorld* createStudentWorld(string assetPath)
 	return new StudentWorld(assetPath);
 }
 
-// Students:  Add code to this file, StudentWorld.h, Actor.h and Actor.cpp
-
 StudentWorld::StudentWorld(string assetPath)
 : GameWorld(assetPath)
 {
@@ -122,7 +120,7 @@ int StudentWorld::move()
 		{
 			if ((*i)->isDead())
 			{
-				cerr << "Deleting: " << (*i)->getType() << endl;
+				cerr << "Deleting object!" << endl;
 
 				delete (*i);
 				m_actorList.erase(i);
@@ -212,17 +210,15 @@ bool StudentWorld::checkBoundaryAt(double dest_x, double dest_y, Actor* src)
 	//check for boundary with all other actors (active, in list)
 	while (it != m_actorList.end())
 	{
-		std::string type = (*it)->getType();
 		if (*it != src)
 		{
-			if (type == "SmartZombie" || type == "DumbZombie" || type == "Citizen" || type == "Wall")
+			if ((*it)->blocksMovement())
 			{
 				double other_x_min = (*it)->getX();
 				double other_y_min = (*it)->getY();
 				double other_x_max = other_x_min + SPRITE_WIDTH-1;
 				double other_y_max = other_y_min + SPRITE_HEIGHT-1;
 
-				
 				if ((x_1 >= other_x_min && x_1 <= other_x_max) && (y_1 >= other_y_min && y_1 <= other_y_max))
 					return true;
 				if ((x_2 >= other_x_min && x_2 <= other_x_max) && (y_2 >= other_y_min && y_2 <= other_y_max))
@@ -256,8 +252,7 @@ bool StudentWorld::checkFireBoundaryAt(double dest_x, double dest_y)
 
 	while (it != m_actorList.end())
 	{
-		std::string type = (*it)->getType();
-		if (type == "Exit" || type == "Wall")
+		if ((*it)->blocksFire())
 		{
 			double other_x_min = (*it)->getX();
 			double other_y_min = (*it)->getY();
@@ -280,6 +275,98 @@ bool StudentWorld::checkFireBoundaryAt(double dest_x, double dest_y)
 	return false;
 }
 
+bool StudentWorld::findNearestPlayer(double dest_x, double dest_y, double &distance, Actor* &nearest)
+{
+	nearest = nullptr;
+
+	/*
+	double p_x = m_player->getX();
+	double p_y = m_player->getY();
+
+	double x_difference = p_x - dest_x;
+	double y_difference = p_y - dest_y;
+	*/
+
+	distance = calculateDistance(dest_x, dest_y, m_player->getX(), m_player->getY());
+
+	nearest = m_player;
+	return true;
+}
+
+bool StudentWorld::findNearestFriendly(double dest_x, double dest_y, double &distance, Actor* &nearest)
+{
+	list<Actor*>::iterator it = m_actorList.begin();
+
+	nearest = nullptr;
+	distance = -1;
+	double candidateDistance = -1;
+
+	if (m_numCitizensLeft == 0)
+		return false;
+
+	while (it != m_actorList.end())
+	{
+		if ((*it)->isFriendly())
+		{
+			candidateDistance = calculateDistance(dest_x, dest_y, (*it)->getX(), (*it)->getY());
+
+			if (distance == -1)
+			{
+				distance = candidateDistance;
+				nearest = *it;
+			}
+			else if (candidateDistance < distance)
+			{
+				distance = candidateDistance;
+				nearest = *it;
+			}
+		}
+
+		it++;
+	}
+
+	if (it == m_actorList.begin())
+		return false;
+
+	return true;
+}
+
+bool StudentWorld::findNearestEvil(double dest_x, double dest_y, double &distance, Actor* &nearest)
+{
+	list<Actor*>::iterator it = m_actorList.begin();
+
+	nearest = nullptr;
+	distance = -1;
+	double candidateDistance = -1;
+
+	while (it != m_actorList.end())
+	{
+		if ((*it)->isEvil())
+		{
+			candidateDistance = calculateDistance(dest_x, dest_y, (*it)->getX(), (*it)->getY());
+
+			if (distance == -1)
+			{
+				distance = candidateDistance;
+				nearest = *it;
+			}
+			else if (candidateDistance < distance)
+			{
+				distance = candidateDistance;
+				nearest = *it;
+			}
+		}
+
+		it++;
+	}
+
+	if (it == m_actorList.begin())
+		return false;
+
+	return true;
+}
+
+/*
 bool StudentWorld::findNearest(double dest_x, double dest_y, std::string type, double &distance, Actor* &nearest)
 {
 	nearest = nullptr;
@@ -340,9 +427,9 @@ bool StudentWorld::findNearest(double dest_x, double dest_y, std::string type, d
 		return false;
 
 	return true;
-}
+}*/
 
-bool StudentWorld::checkOverlapWith(double curr_x, double curr_y, std::string type, Actor* &overlapped)
+/*bool StudentWorld::checkOverlapWith(double curr_x, double curr_y, std::string type, Actor* &overlapped)
 {
 	if (type == "Penelope")
 	{
@@ -395,7 +482,7 @@ bool StudentWorld::checkOverlapWith(double curr_x, double curr_y, std::string ty
 	}
 
 	return false;
-}
+}*/
 
 Actor* StudentWorld::createActor(Level::MazeEntry ge, double x, double y)
 {
@@ -441,7 +528,13 @@ Actor* StudentWorld::createActor(Level::MazeEntry ge, double x, double y)
 	return result;
 }
 
-Actor* StudentWorld::createActor(string type, double x, double y, int direction)
+void StudentWorld::addActor(Actor* created)
+{
+	m_actorList.push_back(created);
+	m_activeActors++;
+}
+
+/*Actor* StudentWorld::createActor(string type, double x, double y, int direction)
 {
 	Actor* result = nullptr;
 	Level::MazeEntry ge;
@@ -490,30 +583,26 @@ Actor* StudentWorld::createActor(string type, double x, double y, int direction)
 		ge = Level::landmine_goodie;
 	
 	return createActor(ge,x/SPRITE_WIDTH,y/SPRITE_HEIGHT);
-}
+}*/
 
 void StudentWorld::infectAllOverlapping(Actor* src)
 {
-	Actor* overlapped = nullptr;
-
 	list<Actor*>::iterator it = m_actorList.begin();
-	
-	if (checkOverlapWith(src->getX(), src->getY(), "Penelope", overlapped))
+
+	if (checkOverlapWithInfectable(src, m_player))
 	{
-		overlapped->setInfected(true);
+		cerr << "Infecting Penelope!" << endl;
+		m_player->setInfected(true);
 	}
 
 	while (it != m_actorList.end())
 	{
-		if ((*it)->getType() == "Citizen")
+		if (checkOverlapWithInfectable(src, *it))
 		{
-			if (checkSpecificOverlapWith(src->getX(), src->getY(), *it))
+			if (!((*it)->isInfected()))
 			{
-				if (!(*it)->isInfected())
-				{
-					(*it)->setInfected(true);
-					playSound(SOUND_CITIZEN_INFECTED);
-				}
+				(*it)->setInfected(true);
+				playSound(SOUND_CITIZEN_INFECTED);
 			}
 		}
 
@@ -521,7 +610,7 @@ void StudentWorld::infectAllOverlapping(Actor* src)
 	}
 }
 
-bool StudentWorld::checkSpecificOverlapWith(double curr_x, double curr_y, Actor* overlapped)
+/*bool StudentWorld::checkSpecificOverlapWith(double curr_x, double curr_y, Actor* overlapped)
 {
 	double x_center = curr_x + SPRITE_WIDTH / 2;
 	double y_center = curr_y + SPRITE_HEIGHT / 2;
@@ -538,64 +627,176 @@ bool StudentWorld::checkSpecificOverlapWith(double curr_x, double curr_y, Actor*
 		return true;
 
 	return false;
-}
+}*/
 
+//might have to make sure to check for self object
 void StudentWorld::damageAllOverlapping(Actor* src)
 {
-	Actor* overlapped = nullptr;
-
 	list<Actor*>::iterator it = m_actorList.begin();
 
-	if (checkOverlapWith(src->getX(), src->getY(), "Penelope", overlapped))
+	if (checkOverlapWithDamageable(src,m_player))
 	{
 		cerr << "Damaging Penelope!" << endl;
-		overlapped->setDead();
+		m_player->setDead();
 	}
 
 	while (it != m_actorList.end())
 	{
-		if ((*it)->getType() == "Citizen")
+		if (checkOverlapWithDamageable(src,*it))
 		{
-			if (checkSpecificOverlapWith(src->getX(), src->getY(), *it))
-			{
-				(*it)->setDead();
-				playSound(SOUND_CITIZEN_DIE);
-				increaseScore(-1000);
-				decNumCitizensLeft();
-			}
-		}
-		if ((*it)->getType() == "DumbZombie")
-		{
-			if (checkSpecificOverlapWith(src->getX(), src->getY(), *it))
-			{
-				(*it)->setDead();
-				playSound(SOUND_ZOMBIE_DIE);
-				increaseScore(1000);
-			}
-		}
-		if ((*it)->getType() == "SmartZombie")
-		{
-			if (checkSpecificOverlapWith(src->getX(), src->getY(), *it))
-			{
-				(*it)->setDead();
-				playSound(SOUND_ZOMBIE_DIE);
-				increaseScore(2000);
-			}
-		}
-		
-		//check for Landmine taken out; overlapping check is given to Landmine itself
-		//if (checkOverlapWith(src->getX(), src->getY(), "Landmine", overlapped))
-		
-		if ((*it)->getType() == "Goodie")
-		{
-			if (checkSpecificOverlapWith(src->getX(), src->getY(), *it))
-			{
-				(*it)->setDead();
-			}
+			(*it)->killByHazard();
 		}
 
 		it++;
 	}
+}
+
+bool StudentWorld::checkOverlapWithDamageable(Actor* src, Actor* other)
+{
+	if (other->isDamageable())
+	{
+		return checkOverlap(src, other);
+	}
+
+	return false;
+}
+
+bool StudentWorld::checkOverlapWithCanPickup(Actor* src)
+{
+	list<Actor*>::iterator it = m_actorList.begin();
+
+	if (m_player->canPickUp() && checkOverlap(src, m_player))
+		return true;
+
+	while (it != m_actorList.end())
+	{
+		if ((*it)->canPickUp() && (*it) != src && checkOverlap(src, *it))
+			return true;
+
+		it++;
+	}
+
+	return false;
+}
+
+bool StudentWorld::checkOverlapWithSavable(Actor* src, Actor* &overlapped)
+{
+	overlapped = nullptr;
+
+	list<Actor*>::iterator it = m_actorList.begin();
+
+	while (it != m_actorList.end())
+	{
+		if ((*it)->isSavable() && (*it) != src && checkOverlap(src, *it))
+		{
+			overlapped = *it;
+			return true;
+		}
+
+		it++;
+	}
+
+	return false;
+}
+
+bool StudentWorld::checkOverlapWithCanActivateTraps(Actor* src)
+{
+	list<Actor*>::iterator it = m_actorList.begin();
+
+	if (m_player->canActivateTraps() && checkOverlap(src, m_player))
+	{
+		return true;
+	}
+
+	while (it != m_actorList.end())
+	{
+		if ((*it)->canActivateTraps() && (*it) != src && checkOverlap(src, *it))
+			return true;
+
+		it++;
+	}
+
+	return false;
+}
+
+bool StudentWorld::checkOverlapWithInfectable(double x_pos, double y_pos)
+{
+	list<Actor*>::iterator it = m_actorList.begin();
+
+	if (m_player->isInfectable() && checkOverlap(x_pos, y_pos, m_player))
+	{
+		return true;
+	}
+
+	while (it != m_actorList.end())
+	{
+		if ((*it)->isInfectable() && checkOverlap(x_pos, y_pos, *it))
+			return true;
+
+		it++;
+	}
+
+	return false;
+}
+
+bool StudentWorld::checkOverlapWithInfectable(Actor* src, Actor* other)
+{
+	if (other->isInfectable())
+	{
+		return checkOverlap(src, other);
+	}
+
+	return false;
+}
+
+bool StudentWorld::checkOverlapWithBlocksFire(double x_pos, double y_pos)
+{
+	list<Actor*>::iterator it = m_actorList.begin();
+
+	while (it != m_actorList.end())
+	{
+		if ((*it)->blocksFire() && checkOverlap(x_pos, y_pos, *it))
+			return true;
+
+		it++;
+	}
+
+	return false;
+}
+
+bool StudentWorld::checkOverlap(Actor* src, Actor* other)
+{
+	double distance = calculateDistance(src->getX(), src->getY(), other->getX(), other->getY());
+
+	if (distance <= 100.0)
+		return true;
+	else
+		return false;
+}
+
+bool StudentWorld::checkOverlap(double x_pos, double y_pos, Actor* other)
+{
+	double distance = calculateDistance(x_pos, y_pos, other->getX(), other->getY());
+
+	if (distance <= 100.0)
+		return true;
+	else
+		return false;
+}
+
+double StudentWorld::calculateDistance(double x_src, double y_src, double x_other, double y_other)
+{
+	double x_center = x_src + SPRITE_WIDTH / 2;
+	double y_center = y_src + SPRITE_HEIGHT / 2;
+
+	double other_x_center = x_other + SPRITE_WIDTH / 2;
+	double other_y_center = y_other + SPRITE_HEIGHT / 2;
+
+	double x_difference = other_x_center - x_center;
+	double y_difference = other_y_center - y_center;
+
+	return (x_difference*x_difference) + (y_difference*y_difference);
+
 }
 
 void StudentWorld::activateAllActors()
@@ -668,12 +869,17 @@ string StudentWorld::updateStatLine()
 	return oss.str();
 }
 
-void StudentWorld::updateGoodies(string type)
+void StudentWorld::updateFlamethrowerSupply(int value)
 {
-	if (type == "VaccineGoodie")
-		m_player->incSupplyVaccines(1);
-	else if (type == "GasCanGoodie")
-		m_player->incSupplyFlamethrower(5);
-	else if (type == "LandmineGoodie")
-		m_player->incSupplyLandmines(2);
+	m_player->incSupplyFlamethrower(value);
+}
+
+void StudentWorld::updateLandmineSupply(int value)
+{
+	m_player->incSupplyLandmines(value);
+}
+
+void StudentWorld::updateVaccineSupply(int value)
+{
+	m_player->incSupplyVaccines(value);
 }

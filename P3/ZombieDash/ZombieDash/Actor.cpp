@@ -53,22 +53,37 @@ bool Actor::isDamageable()
 	return false;
 }
 
-void Actor::killByFire() //======maybe can combine killByFire and killByPit
-{
-	return;
-}
-
-void Actor::killByPit()
+void Actor::killByHazard() //======maybe can combine killByFire and killByPit
 {
 	return;
 }
 
 bool Actor::blocksMovement()
 {
-	false;
+	return false;
 }
 
 bool Actor::blocksFire()
+{
+	return false;
+}
+
+bool Actor::isFriendly()
+{
+	return false;
+}
+
+bool Actor::isEvil()
+{
+	return false;
+}
+
+bool Actor::canPickUp()
+{
+	return false;
+}
+
+bool Actor::canActivateTraps()
 {
 	return false;
 }
@@ -81,6 +96,11 @@ int Actor::getLifeTicks()
 int Actor::setLifeTicks(int value)
 {
 	return m_lifeTicks = value;
+}
+
+bool Actor::isSavable()
+{
+	return false;
 }
 
 //==============================================Characters's IMPLEMENTATIONS===========================================
@@ -112,6 +132,11 @@ bool Character::blocksMovement()
 }
 
 bool Character::isDamageable()
+{
+	return true;
+}
+
+bool Character::canActivateTraps()
 {
 	return true;
 }
@@ -162,6 +187,21 @@ int Penelope::incSupplyVaccines(int amount)
 	return m_supplyVaccines += amount;
 }
 
+void Penelope::killByHazard() //======maybe can combine killByFire and killByPit
+{
+	setDead();
+}
+
+bool Penelope::isFriendly()
+{
+	return true;
+}
+
+bool Penelope::canPickUp()
+{
+	return true;
+}
+
 //other function implementations
 void Penelope::doSomething()
 {
@@ -170,7 +210,7 @@ void Penelope::doSomething()
 
 	if (isInfected())
 	{
-		if (incInfectedCount() >= 500)
+		if (setInfectedCount(getInfectedCount()+1) >= 500)
 		{
 			setDead();
 			getWorld()->playSound(SOUND_PLAYER_DIE);
@@ -256,12 +296,10 @@ void Penelope::doSomething()
 						pos_y = getY();
 					}
 
-					Actor* temp;
-
-					if (getWorld()->checkOverlapWith(pos_x, pos_y, "Wall", temp) || getWorld()->checkOverlapWith(pos_x, pos_y, "Exit", temp))
+					if (getWorld()->checkOverlapWithBlocksFire(pos_x, pos_y))
 						break;
 					else
-						getWorld()->createActor("Flame", pos_x, pos_y, getDirection());
+						getWorld()->addActor(new Flame(pos_x, pos_y, getDirection(),getWorld()));
 				}
 			}
 
@@ -273,7 +311,7 @@ void Penelope::doSomething()
 				m_supplyLandmines--;
 
 				//Introduce landmine object on ground into the game
-				getWorld()->createActor("Landmine", getX(), getY(), right);
+				getWorld()->addActor(new Landmine(getX(), getY(), getWorld()));
 			}
 
 			break;
@@ -315,7 +353,8 @@ Exit::Exit(double startX, double startY, StudentWorld* world) : Actor(IID_EXIT, 
 void Exit::doSomething()
 {
 	Actor* temp = nullptr;
-	if (getWorld()->checkOverlapWith(getX(), getY(), "Citizen", temp))
+
+	if (getWorld()->getNumCitizensLeft() != 0 && getWorld()->checkOverlapWithSavable(this, temp))
 	{
 		getWorld()->increaseScore(500);
 
@@ -325,7 +364,7 @@ void Exit::doSomething()
 
 		getWorld()->decNumCitizensLeft();
 	}
-	else if (getWorld()->checkOverlapWith(getX(), getY(), "Penelope", temp) && getWorld()->getNumCitizensLeft() == 0)
+	else if (getWorld()->getNumCitizensLeft() == 0 && getWorld()->checkOverlap(this, getWorld()->getPlayer()))
 	{
 		getWorld()->finishLevel();
 	}
@@ -349,7 +388,7 @@ void Citizen::doSomething()
 
 	if (isInfected())
 	{
-		if (incInfectedCount() >= 500)
+		if (setInfectedCount(getInfectedCount()+1) >= 500)
 		{
 			setDead();
 			getWorld()->playSound(SOUND_ZOMBIE_BORN);
@@ -359,12 +398,12 @@ void Citizen::doSomething()
 			//introduce new Zombie (70% dumb, 30% smart)
 			if (randInt(1, 10) <= 7)
 			{
-				getWorld()->createActor("DumbZombie", getX(), getY(), right);
+				getWorld()->addActor(new DumbZombie(getX(), getY(), getWorld()));
 				cerr << "Created DumbZombie" << endl;
 			}
 			else
 			{
-				getWorld()->createActor("SmartZombie", getX(), getY(), right);
+				getWorld()->addActor(new SmartZombie(getX(), getY(), getWorld()));
 				cerr << "Created SmartZombie" << endl;
 			}
 
@@ -385,8 +424,8 @@ void Citizen::doSomething()
 
 	Actor* throwaway = nullptr;
 
-	getWorld()->findNearest(getX(), getY(), "Penelope", dist_p, throwaway);
-	getWorld()->findNearest(getX(), getY(), "Zombie", dist_z, throwaway);
+	getWorld()->findNearestPlayer(getX(), getY(), dist_p, throwaway);
+	getWorld()->findNearestEvil(getX(), getY(), dist_z, throwaway);
 	
 	if (((dist_z == -1) || (dist_p < dist_z)) && dist_p <= 80 * 80)
 	{
@@ -522,7 +561,7 @@ void Citizen::doSomething()
 		if (!(getWorld()->checkBoundaryAt(getX(), getY() + 2, this)))
 		{
 			double dist_candidate;
-			getWorld()->findNearest(getX(), getY() + 2, "Zombie", dist_candidate, throwaway);
+			getWorld()->findNearestEvil(getX(), getY() + 2, dist_candidate, throwaway);
 			if (dist_candidate > dist_near)
 			{
 				dist_near = dist_candidate;
@@ -532,7 +571,7 @@ void Citizen::doSomething()
 		if (!(getWorld()->checkBoundaryAt(getX(), getY() - 2, this)))
 		{
 			double dist_candidate;
-			getWorld()->findNearest(getX(), getY() - 2, "Zombie", dist_candidate, throwaway);
+			getWorld()->findNearestEvil(getX(), getY() - 2, dist_candidate, throwaway);
 			if (dist_candidate > dist_near)
 			{
 				dist_near = dist_candidate;
@@ -542,7 +581,7 @@ void Citizen::doSomething()
 		if (!(getWorld()->checkBoundaryAt(getX() + 2, getY(), this)))
 		{
 			double dist_candidate;
-			getWorld()->findNearest(getX() + 2, getY(), "Zombie", dist_candidate, throwaway);
+			getWorld()->findNearestEvil(getX() + 2, getY(), dist_candidate, throwaway);
 			if (dist_candidate > dist_near)
 			{
 				dist_near = dist_candidate;
@@ -552,7 +591,7 @@ void Citizen::doSomething()
 		if (!(getWorld()->checkBoundaryAt(getX() - 2, getY(), this)))
 		{
 			double dist_candidate;
-			getWorld()->findNearest(getX() - 2, getY(), "Zombie", dist_candidate, throwaway);
+			getWorld()->findNearestEvil(getX() - 2, getY(), dist_candidate, throwaway);
 			if (dist_candidate > dist_near)
 			{
 				dist_near = dist_candidate;
@@ -585,6 +624,24 @@ bool Citizen::isInfectable()
 	return true;
 }
 
+void Citizen::killByHazard() //======maybe can combine killByFire and killByPit
+{
+	setDead();
+	getWorld()->playSound(SOUND_CITIZEN_DIE);
+	getWorld()->increaseScore(-1000);
+	getWorld()->decNumCitizensLeft();
+}
+
+bool Citizen::isFriendly()
+{
+	return true;
+}
+
+bool Citizen::isSavable()
+{
+	return true;
+}
+
 //==============================================ZOMBIE's IMPLEMENTATIONS===============================================
 
 Zombie::Zombie(double startX, double startY, StudentWorld* world) : Character(IID_ZOMBIE, startX, startY, 0, world), m_movementPlan(0) {}
@@ -602,6 +659,11 @@ int Zombie::setMovementPlan(int value)
 int Zombie::decMovementPlan()
 {
 	return --m_movementPlan;
+}
+
+bool Zombie::isEvil()
+{
+	return true;
 }
 
 //============================================DUMB ZOMBIE's IMPLEMENTATIONS===============================================
@@ -651,11 +713,11 @@ void DumbZombie::doSomething()
 
 	Actor* overlapped = nullptr;
 
-	if (getWorld()->checkOverlapWith(vomit_x, vomit_y, "Penelope", overlapped) || getWorld()->checkOverlapWith(vomit_x,vomit_y, "Citizen", overlapped))
+	if (getWorld()->checkOverlapWithInfectable(vomit_x, vomit_y))
 	{
 		if (randInt(1, 3) == 1)
 		{
-			getWorld()->createActor("Vomit", vomit_x, vomit_y, dir);
+			getWorld()->addActor(new Vomit(vomit_x, vomit_y, dir, getWorld()));
 			getWorld()->playSound(SOUND_ZOMBIE_VOMIT);
 			return;
 		}
@@ -715,6 +777,13 @@ void DumbZombie::doSomething()
 		setMovementPlan(0);
 }
 
+void DumbZombie::killByHazard()
+{
+	setDead();
+	getWorld()->playSound(SOUND_ZOMBIE_DIE);
+	getWorld()->increaseScore(1000);
+}
+
 //===========================================SMART ZOMBIE's IMPLEMENTATIONS===============================================
 SmartZombie::SmartZombie(double startX, double startY, StudentWorld* world) : Zombie(startX, startY, world) {}
 
@@ -761,11 +830,11 @@ void SmartZombie::doSomething()
 
 	Actor* overlapped = nullptr;
 
-	if (getWorld()->checkOverlapWith(vomit_x, vomit_y, "Penelope", overlapped) || getWorld()->checkOverlapWith(vomit_x, vomit_y, "Citizen", overlapped))
+	if (getWorld()->checkOverlapWithInfectable(vomit_x, vomit_y))
 	{
 		if (randInt(1, 3) == 1)
 		{
-			getWorld()->createActor("Vomit", vomit_x, vomit_y, dir);
+			getWorld()->addActor(new Vomit(vomit_x, vomit_y, dir, getWorld()));
 			getWorld()->playSound(SOUND_ZOMBIE_VOMIT);
 			return;
 		}
@@ -783,8 +852,8 @@ void SmartZombie::doSomething()
 		Actor* nearest_player = nullptr;
 		Actor* nearest_citizen = nullptr;
 		Actor* nearest = nullptr;
-		getWorld()->findNearest(getX(), getY(), "Penelope", p_dist, nearest_player);
-		if (getWorld()->findNearest(getX(), getY(), "Citizen", c_dist, nearest_citizen) && c_dist <= p_dist)
+		getWorld()->findNearestPlayer(getX(), getY(), p_dist, nearest_player);
+		if (getWorld()->findNearestFriendly(getX(), getY(), c_dist, nearest_citizen) && c_dist <= p_dist)
 		{
 			dist = c_dist;
 			nearest = nearest_citizen;
@@ -896,6 +965,13 @@ void SmartZombie::doSomething()
 		setMovementPlan(0);
 }
 
+void SmartZombie::killByHazard()
+{
+	setDead();
+	getWorld()->playSound(SOUND_ZOMBIE_DIE);
+	getWorld()->increaseScore(2000);
+}
+
 //=============================================VOMIT's IMPLEMENTATIONS===============================================
 Vomit::Vomit(double startX, double startY, int direction, StudentWorld* world) : Actor(IID_VOMIT, startX, startY, direction, 0, world) {}
 
@@ -910,7 +986,7 @@ void Vomit::doSomething()
 		return;
 	}
 	else
-		cerr << incLifeTicks() << endl;
+		cerr << setLifeTicks(getLifeTicks()+1) << endl;
 
 	getWorld()->infectAllOverlapping(this);
 }
@@ -929,7 +1005,7 @@ void Flame::doSomething()
 		return;
 	}
 	else
-		incLifeTicks();
+		setLifeTicks(getLifeTicks()+1);
 
 	getWorld()->damageAllOverlapping(this);
 }
@@ -952,7 +1028,7 @@ void Goodie::doSomething()
 	
 	Actor* temp = nullptr;
 
-	if (getWorld()->checkOverlapWith(getX(), getY(), "Penelope", temp))
+	if (getWorld()->checkOverlapWithCanPickup(this))
 	{
 		getWorld()->increaseScore(50);
 
@@ -967,6 +1043,11 @@ void Goodie::doSomething()
 bool Goodie::isDamageable()
 {
 	return true;
+}
+
+void Goodie::killByHazard()
+{
+	setDead();
 }
 
 //===============================================VACCINE GOODIE's IMPLEMENTATIONS===============================================
@@ -994,7 +1075,7 @@ void LandmineGoodie::updateSupply()
 }
 
 //==================================================LANDMINE's IMPLEMENTATIONS===============================================
-Landmine::Landmine(double startX, double startY, StudentWorld* world) : Actor(IID_LANDMINE, startX, startY, right, 1, world, "Landmine"), m_safetyTicks(30) {}
+Landmine::Landmine(double startX, double startY, StudentWorld* world) : Actor(IID_LANDMINE, startX, startY, right, 1, world), m_safetyTicks(30) {}
 
 bool Landmine::isOnSafety()
 {
@@ -1012,70 +1093,42 @@ void Landmine::doSomething()
 
 	if (isOnSafety())
 	{
-		if (getWorld()->checkOverlapWith(getX(), getY(), "Flame", temp))
-		{
-			setDead();
-
-			getWorld()->playSound(SOUND_LANDMINE_EXPLODE);
-
-			//introduce flames at and around landmine's position
-			if (!getWorld()->checkFireBoundaryAt(getX() - SPRITE_WIDTH, getY() + SPRITE_HEIGHT))
-				getWorld()->createActor("Flame", getX() - SPRITE_WIDTH, getY() + SPRITE_HEIGHT, up);
-			if (!getWorld()->checkFireBoundaryAt(getX(), getY() + SPRITE_HEIGHT))
-				getWorld()->createActor("Flame", getX(), getY() + SPRITE_HEIGHT, up);
-			if (!getWorld()->checkFireBoundaryAt(getX() + SPRITE_WIDTH, getY() + SPRITE_HEIGHT))
-				getWorld()->createActor("Flame", getX() + SPRITE_WIDTH, getY() + SPRITE_HEIGHT, up);
-			if (!getWorld()->checkFireBoundaryAt(getX() - SPRITE_WIDTH, getY()))
-				getWorld()->createActor("Flame", getX() - SPRITE_WIDTH, getY(), up);
-			if (!getWorld()->checkFireBoundaryAt(getX(), getY()))
-				getWorld()->createActor("Flame", getX(), getY(), up);
-			if (!getWorld()->checkFireBoundaryAt(getX() + SPRITE_WIDTH, getY()))
-				getWorld()->createActor("Flame", getX() + SPRITE_WIDTH, getY(), up);
-			if (!getWorld()->checkFireBoundaryAt(getX() - SPRITE_WIDTH, getY() - SPRITE_HEIGHT))
-				getWorld()->createActor("Flame", getX() - SPRITE_WIDTH, getY() - SPRITE_HEIGHT, up);
-			if (!getWorld()->checkFireBoundaryAt(getX(), getY() - SPRITE_HEIGHT))
-				getWorld()->createActor("Flame", getX(), getY() - SPRITE_HEIGHT, up);
-			if (!getWorld()->checkFireBoundaryAt(getX() + SPRITE_WIDTH, getY() - SPRITE_HEIGHT))
-				getWorld()->createActor("Flame", getX() + SPRITE_WIDTH, getY() - SPRITE_HEIGHT, up);
-
-			//introduce pit at landmine's positon
-			getWorld()->createActor("Pit", getX(), getY(), up);
-		}
-
 		m_safetyTicks--;
 		return;
 	}
 
-	if (getWorld()->checkOverlapWith(getX(), getY(), "Penelope", temp) ||
-		getWorld()->checkOverlapWith(getX(), getY(), "Citizen", temp) ||
-		getWorld()->checkOverlapWith(getX(), getY(), "Zombie", temp) ||
-		getWorld()->checkOverlapWith(getX(), getY(), "Flame", temp))
+	if (getWorld()->checkOverlapWithCanActivateTraps(this))
 	{
-		setDead();
-
-		getWorld()->playSound(SOUND_LANDMINE_EXPLODE);
-
-		//introduce flames at and around landmine's position
-		if (!getWorld()->checkFireBoundaryAt(getX() - SPRITE_WIDTH, getY() + SPRITE_HEIGHT))
-			getWorld()->createActor("Flame", getX() - SPRITE_WIDTH, getY() + SPRITE_HEIGHT, up);
-		if (!getWorld()->checkFireBoundaryAt(getX(), getY() + SPRITE_HEIGHT))
-			getWorld()->createActor("Flame", getX(), getY() + SPRITE_HEIGHT, up);
-		if (!getWorld()->checkFireBoundaryAt(getX() + SPRITE_WIDTH, getY() + SPRITE_HEIGHT))
-			getWorld()->createActor("Flame", getX() + SPRITE_WIDTH, getY() + SPRITE_HEIGHT, up);
-		if (!getWorld()->checkFireBoundaryAt(getX() - SPRITE_WIDTH, getY()))
-			getWorld()->createActor("Flame", getX() - SPRITE_WIDTH, getY(), up);
-		if (!getWorld()->checkFireBoundaryAt(getX(), getY()))
-			getWorld()->createActor("Flame", getX(), getY(), up);
-		if (!getWorld()->checkFireBoundaryAt(getX() + SPRITE_WIDTH, getY()))
-			getWorld()->createActor("Flame", getX() + SPRITE_WIDTH, getY(), up);
-		if (!getWorld()->checkFireBoundaryAt(getX() - SPRITE_WIDTH, getY() - SPRITE_HEIGHT))
-			getWorld()->createActor("Flame", getX() - SPRITE_WIDTH, getY() - SPRITE_HEIGHT, up);
-		if (!getWorld()->checkFireBoundaryAt(getX(), getY() - SPRITE_HEIGHT))
-			getWorld()->createActor("Flame", getX(), getY() - SPRITE_HEIGHT, up);
-		if (!getWorld()->checkFireBoundaryAt(getX() + SPRITE_WIDTH, getY() - SPRITE_HEIGHT))
-			getWorld()->createActor("Flame", getX() + SPRITE_WIDTH, getY() - SPRITE_HEIGHT, up);
-
-		//introduce pit at landmine's positon
-		getWorld()->createActor("Pit", getX(), getY(), up);
+		killByHazard();
 	}
+}
+
+void Landmine::killByHazard()
+{
+	setDead();
+
+	getWorld()->playSound(SOUND_LANDMINE_EXPLODE);
+
+	//introduce flames at and around landmine's position
+	if (!getWorld()->checkFireBoundaryAt(getX() - SPRITE_WIDTH, getY() + SPRITE_HEIGHT))
+		getWorld()->addActor(new Flame(getX() - SPRITE_WIDTH, getY() + SPRITE_HEIGHT, up, getWorld()));
+	if (!getWorld()->checkFireBoundaryAt(getX(), getY() + SPRITE_HEIGHT))
+		getWorld()->addActor(new Flame(getX(), getY() + SPRITE_HEIGHT, up, getWorld()));
+	if (!getWorld()->checkFireBoundaryAt(getX() + SPRITE_WIDTH, getY() + SPRITE_HEIGHT))
+		getWorld()->addActor(new Flame(getX() + SPRITE_WIDTH, getY() + SPRITE_HEIGHT, up, getWorld()));
+	if (!getWorld()->checkFireBoundaryAt(getX() - SPRITE_WIDTH, getY()))
+		getWorld()->addActor(new Flame(getX() - SPRITE_WIDTH, getY(), up, getWorld()));
+	if (!getWorld()->checkFireBoundaryAt(getX(), getY()))
+		getWorld()->addActor(new Flame(getX(), getY(), up, getWorld()));
+	if (!getWorld()->checkFireBoundaryAt(getX() + SPRITE_WIDTH, getY()))
+		getWorld()->addActor(new Flame(getX() + SPRITE_WIDTH, getY(), up, getWorld()));
+	if (!getWorld()->checkFireBoundaryAt(getX() - SPRITE_WIDTH, getY() - SPRITE_HEIGHT))
+		getWorld()->addActor(new Flame(getX() - SPRITE_WIDTH, getY() - SPRITE_HEIGHT, up, getWorld()));
+	if (!getWorld()->checkFireBoundaryAt(getX(), getY() - SPRITE_HEIGHT))
+		getWorld()->addActor(new Flame(getX(), getY() - SPRITE_HEIGHT, up, getWorld()));
+	if (!getWorld()->checkFireBoundaryAt(getX() + SPRITE_WIDTH, getY() - SPRITE_HEIGHT))
+		getWorld()->addActor(new Flame(getX() + SPRITE_WIDTH, getY() - SPRITE_HEIGHT, up, getWorld()));
+
+	//introduce pit at landmine's positon
+	getWorld()->addActor(new Pit(getX(), getY(), getWorld()));
 }
