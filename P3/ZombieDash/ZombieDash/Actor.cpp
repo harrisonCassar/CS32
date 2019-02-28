@@ -104,7 +104,7 @@ bool Actor::isSavable()
 }
 
 //==============================================Characters's IMPLEMENTATIONS===========================================
-Character::Character(int imageID, double startX, double startY, int depth, StudentWorld* world) : Actor(imageID, startX, startY, right, 0, world), m_isParalyzed(false), m_infectedCount(0) {}
+Character::Character(int imageID, double startX, double startY, StudentWorld* world) : Actor(imageID, startX, startY, right, 0, world), m_isParalyzed(false), m_infectedCount(0) {}
 
 bool Character::isParalyzed()
 {
@@ -143,8 +143,7 @@ bool Character::canActivateTraps()
 
 //==============================================PENELOPE's IMPLEMENTATIONS===========================================
 
-//constructor
-Penelope::Penelope(double startX, double startY, StudentWorld* world) : Character(IID_PLAYER, startX, startY,0,world)
+Penelope::Penelope(double startX, double startY, StudentWorld* world) : Character(IID_PLAYER, startX, startY,world)
 {
 	m_supplyLandmines = 0;
 	m_supplyFlamethrower = 0;
@@ -156,7 +155,6 @@ bool Penelope::isInfectable()
 	return true;
 }
 
-//accessor function implementations
 int Penelope::getSupplyLandmines()
 {
 	return m_supplyLandmines;
@@ -202,7 +200,6 @@ bool Penelope::canPickUp()
 	return true;
 }
 
-//other function implementations
 void Penelope::doSomething()
 {
 	if (isDead())
@@ -367,6 +364,7 @@ void Exit::doSomething()
 	else if (getWorld()->getNumCitizensLeft() == 0 && getWorld()->checkOverlap(this, getWorld()->getPlayer()))
 	{
 		getWorld()->finishLevel();
+		getWorld()->playSound(SOUND_LEVEL_FINISHED);
 	}
 }
 
@@ -377,7 +375,7 @@ bool Exit::blocksFire()
 
 //==============================================CITIZEN's IMPLEMENTATIONS===============================================
 
-Citizen::Citizen(double startX, double startY, StudentWorld* world) : Character(IID_CITIZEN, startX, startY, 0, world) {}
+Citizen::Citizen(double startX, double startY, StudentWorld* world) : Character(IID_CITIZEN, startX, startY, world) {}
 
 void Citizen::doSomething()
 {
@@ -644,7 +642,7 @@ bool Citizen::isSavable()
 
 //==============================================ZOMBIE's IMPLEMENTATIONS===============================================
 
-Zombie::Zombie(double startX, double startY, StudentWorld* world) : Character(IID_ZOMBIE, startX, startY, 0, world), m_movementPlan(0) {}
+Zombie::Zombie(double startX, double startY, StudentWorld* world) : Character(IID_ZOMBIE, startX, startY, world), m_movementPlan(0) {}
 
 int Zombie::getMovementPlan()
 {
@@ -780,6 +778,40 @@ void DumbZombie::killByHazard()
 	setDead();
 	getWorld()->playSound(SOUND_ZOMBIE_DIE);
 	getWorld()->increaseScore(1000);
+
+	if (randInt(1, 10) == 1)
+	{
+		double curr_x = getX();
+		double curr_y = getY();
+
+		double vaccine_x;
+		double vaccine_y;
+
+		switch (randInt(1, 4))
+		{
+		case 1: //up
+			vaccine_x = curr_x;
+			vaccine_y = curr_y + SPRITE_HEIGHT;
+			break;
+		case 2: //down
+			vaccine_x = curr_x;
+			vaccine_y = curr_y - SPRITE_HEIGHT;
+			break;
+		case 3: //left
+			vaccine_x = curr_x - SPRITE_WIDTH;
+			vaccine_y = curr_y;
+			break;
+		case 4: //right
+			vaccine_x = curr_x + SPRITE_WIDTH;
+			vaccine_y = curr_y;
+			break;
+		}
+
+		if (!(getWorld()->checkOverlapWithAny(vaccine_x, vaccine_y)))
+		{
+			getWorld()->addActor(new VaccineGoodie(vaccine_x, vaccine_y, getWorld()));
+		}
+	}
 }
 
 //===========================================SMART ZOMBIE's IMPLEMENTATIONS===============================================
@@ -825,8 +857,6 @@ void SmartZombie::doSomething()
 		vomit_y = curr_y;
 		break;
 	}
-
-	Actor* overlapped = nullptr;
 
 	if (getWorld()->checkOverlapWithInfectable(vomit_x, vomit_y))
 	{
@@ -1023,8 +1053,6 @@ void Goodie::doSomething()
 {
 	if (isDead())
 		return;
-	
-	Actor* temp = nullptr;
 
 	if (getWorld()->checkOverlapWithCanPickup(this))
 	{
@@ -1086,8 +1114,6 @@ void Landmine::doSomething()
 {
 	if (isDead())
 		return;
-
-	Actor* temp = nullptr;
 
 	if (isOnSafety())
 	{

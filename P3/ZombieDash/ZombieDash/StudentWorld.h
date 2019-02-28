@@ -36,7 +36,8 @@ public:
 	bool checkOverlapWithInfectable(double x_pos, double y_pos);
 	bool checkOverlapWithInfectable(Actor* src, Actor* other);
 	bool checkOverlapWithBlocksFire(double x_pos, double y_pos);
-
+	bool checkOverlapWithAny(double x_pos, double y_pos);
+	
 	bool checkOverlap(Actor* src, Actor* other);
 	bool checkOverlap(double x_pos, double y_pos, Actor* other);
 

@@ -16,15 +16,13 @@ public:
 	
 	bool isInfected();
 	bool setInfected(bool value);
-	virtual bool isInfectable(); //RECENTLY ADDED
-
+	virtual bool isInfectable();
 	bool isActive();
 	bool setActive(bool value);
 
 	virtual bool isDamageable();
 	virtual void killByHazard();
-	//virtual void killByPit(); //======maybe can combine killByFire and killByPit
-	
+
 	virtual bool blocksMovement();
 	virtual bool blocksFire();
 
@@ -45,25 +43,26 @@ private:
 	
 	bool m_isDead;
 	bool m_isActive;
-	int m_lifeTicks;
 	bool m_isInfected;
+	int m_lifeTicks;
 };
 
 class Character : public Actor
 {
 public:
-	Character(int imageID, double startX, double startY, int depth, StudentWorld* world);
+	Character(int imageID, double startX, double startY, StudentWorld* world);
 	bool isParalyzed();
 	bool setParalyzed(bool value);
-	int getInfectedCount();  //RECENTLY MOVED HERE
-	int setInfectedCount(int value);  //RECENTLY MOVED HERE
+	int getInfectedCount();
+	int setInfectedCount(int value);
 
 	virtual bool canActivateTraps();
 	virtual bool blocksMovement();
 	virtual bool isDamageable();
+
 private:
 	bool m_isParalyzed;
-	int m_infectedCount; //RECENTLY MOVED HERE
+	int m_infectedCount;
 };
 
 class Penelope : public Character
@@ -75,10 +74,8 @@ public:
 
 	virtual bool isFriendly();
 	virtual bool canPickUp();
+	virtual bool isInfectable();
 
-	virtual bool isInfectable(); //RECENTLY ADDED
-
-	//accessor functions
 	int getSupplyLandmines();
 	int getSupplyFlamethrower();
 	int getSupplyVaccines();
@@ -115,11 +112,10 @@ class Citizen : public Character
 public:
 	Citizen(double startX, double startY, StudentWorld* world);
 	virtual void doSomething();
-	virtual bool isInfectable(); //RECENTLY ADDED
+	virtual bool isInfectable();
 	virtual void killByHazard();
 	virtual bool isFriendly();
 	virtual bool isSavable();
-private:
 };
 
 class Zombie : public Character
