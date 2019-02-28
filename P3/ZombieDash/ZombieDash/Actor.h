@@ -122,7 +122,6 @@ class Zombie : public Character
 {
 public:
 	Zombie(double startX, double startY, StudentWorld* world);
-	virtual void doSomething() = 0;
 	int getMovementPlan();
 	int setMovementPlan(int value);
 	int decMovementPlan();

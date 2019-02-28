@@ -807,7 +807,7 @@ void DumbZombie::killByHazard()
 			break;
 		}
 
-		if (!(getWorld()->checkOverlapWithAny(vaccine_x, vaccine_y)))
+		if (!(getWorld()->checkOverlapWithAny(vaccine_x, vaccine_y)) && !(getWorld()->checkBoundaryAt(vaccine_x,vaccine_y,nullptr)))
 		{
 			getWorld()->addActor(new VaccineGoodie(vaccine_x, vaccine_y, getWorld()));
 		}

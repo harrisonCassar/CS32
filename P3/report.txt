@@ -1,0 +1,356 @@
+/****************************************************************************
+	Harrison Cassar
+	ID: 505114980
+	Discussion 1C
+	TA: Hackett, T.R.
+
+	Report for Project 3 of CS32 with Professor Carey Nachenberg
+
+	Last Edit: 2/27/2018
+
+****************************************************************************/
+
+1. High-level description of each of my public member functions in each of my classes, and why I chose to define each member function in its host class, and why I decided to make it virtual or pure virtual:
+	-StudentWorld:
+		//NOTE: For all of the StudentWorld functions, the reason why I chose to define them inside of the StudentWorld class as opposed to somewhere in one of the Actor classes is because generally these functions need to have access to the list of currently-existing Actors. Additonally I wanted to delegate as much of the game management to the StudentWorld class as I possibly could.
+		
+		//Constructor for StudentWorld that initializes all of StudentWorld's data members (such as m_numCitizensLeft) that are used by the other member functions of StudentWorld
+		StudentWorld(std::string assetPath);
+		
+		//This virtual destructor simply calls my implemented CleanUp() member function per the reccomendation by the specification document. The reason why it is virtual is because it is generally good practice to indicate that your base class's destructor is virtual (even though its not necessary here), which you should have when working with inheritance, as then the derived object is for sure destructed correctly 
+		virtual ~StudentWorld();
+    		
+		//For my init function, it begins by resetting StudentWorld's data members in preparation for constructing the new/next level. Then, the function loads the next level .txt file, processing it for validity before allocating memory for each of the actors indicated in the file and storing pointers to these Actors in StudentWorld's list of actors. The function is virtual as per the specification.
+		virtual int init();
+
+		//For my move function, StudentWorld simply calls the doSomething() function of Penelope and then iterates through every Actor in its list data member and calls their doSomething() functions as per the specification (which keep track of all the Actors currently in existence), checking if Penelope is ever killed or the level is finished as it goes. The function then deletes all now "Dead" Actors from the list, and then activates all newly-created Actors in preparation for the next tick (this is to ensure their doSomething() methods are not called during the same tick they are created) and updates the stat-line. It is virtual per the specification.
+    		virtual int move();
+
+		//The cleanUp() function simply calls "delete" on the "m_player" pointer to Penelope, as well as iterating through StudentWorld's list data member of Actor*'s and deleting each Actor*, followed by erasing the pointer out of the List. It is virtual per the specification.
+    		virtual void cleanUp();
+		
+		//This function simply sets the m_finishedLevel data member to true when it is called. It is used by Exit to indicate that the Player has ended the level successfully, and StudentWorld checks the value of this data member at the end of every tick to pass along the correct game state to GameWorld.
+		void finishLevel();
+		
+		//These two functions manage the m_numCitizensLeft data member in StudentWorld by incrementing and decrementing it properly when called.
+		int getNumCitizensLeft();
+		int decNumCitizensLeft();
+
+		//This is an accessor function to a pointer to the Player that is used by certain parts of ZombieDash for ease of implementation.
+		Actor* getPlayer();
+		
+		//These two functions essentially check if any part of the hitbox of the passed in location would be intersecting (and therefore should be blocked) another object, where both of the objects that are checked by the function/call the function cannot intersect with each other per the specification.
+		bool checkBoundaryAt(double dest_x, double dest_y, Actor* src);
+		bool checkFireBoundaryAt(double dest_x, double dest_y);
+		
+		//Each of the next 8 functions are considered together as a part of the Overlap function "family". Each of the functions check the value of a specific attribute of the specificed Actor(s) (which is given by a virtual function that is redefined to return 'true' in each of the proper derived classes from the Actor ABC), and then checks the Euclidean distance between one object and either all of the other "Actor" objects in existance or one other specific object by calling the overloaded auxiliary function "checkOverlap()" (which is described after this section).
+		bool checkOverlapWithDamageable(Actor* src, Actor* other);
+		bool checkOverlapWithSavable(Actor* src, Actor* &overlapped);
+		bool checkOverlapWithCanPickup(Actor* src);
+		bool checkOverlapWithCanActivateTraps(Actor* src);
+		bool checkOverlapWithInfectable(double x_pos, double y_pos);
+		bool checkOverlapWithInfectable(Actor* src, Actor* other);
+		bool checkOverlapWithBlocksFire(double x_pos, double y_pos);
+		bool checkOverlapWithAny(double x_pos, double y_pos);
+		
+		//These two "checkOverlap()" overloaded functions are utilized by the above Overlap function "family" as a way to make the functions more streamlined and less repetitive. Essentially both check the Euclidean distance beteween one object/pair of coordinates and the other object to see if they are, by definition, "overlapping".
+		bool checkOverlap(Actor* src, Actor* other);
+		bool checkOverlap(double x_pos, double y_pos, Actor* other);
+
+		//This function was created as an auxiliary function for the Overlap function "family" to use as a way to calculate and return the Euclidean distance. This function is also utilized by the Citizen's implemented AI.
+		double calculateDistance(double x_src, double y_src, double x_other, double y_other);
+		
+		//Each of these three functions were made for use by the SmartZombie and Citizen AI, where each function finds the nearest Actor's that have a certain attribute (isEvil/isFriendly) marked true or is specifically the player. If no Actor is found with the proper attributes marked as true, then it returns 'false' and sets the 'overlapped' parameter to the nullptr.
+		bool findNearestPlayer(double dest_x, double dest_y, double &distance, Actor* &nearest);
+		bool findNearestEvil(double dest_x, double dest_y, double &distance, Actor* &nearest);
+		bool findNearestFriendly(double dest_x, double dest_y, double &distance, Actor* &nearest); //this does not include checks for Player, even though it is Friendly
+
+		//The createActor() function is used by the init() function to allocate memory for a specific Actor object as indicated by the "ge" MazeEntry parameter.
+		Actor* createActor(Level::MazeEntry ge, double startX, double startY);
+
+		//This function simply adds the passed in Actor* pointer to the actorList. This function is utilized by the various implementations of the ZombieDash functionalities.
+		void addActor(Actor* created);
+		
+		//This function constructs a new string with the updated game state values present in Penelope's data members and recieved through certain of GameWorld's public member functions. This finished string is then passed into GameWorld's setGameStatText() public member function.
+		string updateStatLine();
+
+		//These three updateTypeSupply functions each properly increment Penelope's supply of each item (or "Goodie") by calling the respective "incSupplyType" public member function of the Peneloppe
+		void updateVaccineSupply(int value);
+		void updateFlamethrowerSupply(int value);
+		void updateLandmineSupply(int value);
+		
+		//This function iterates through all of the currently-existent Actors pointed to by the list of Actor*'s and set's their state to "Active", which means that on the next tick (and also on the rest until their deletion), StudentWorld's move() method will call the Actor's doSomething() function.
+		void activateAllActors();
+		
+		//These two functions are called by specifically Vomit, Flame, and Pit Actor objects during their doSomething() method calls. Each of the functions check the value of a certain attribute (isDamageable/isInfectable), and then infect/damage all the Actor objects that are overlapping with the "src" Actor that is passed in as a parameter.
+		void infectAllOverlapping(Actor* src);
+		void damageAllOverlapping(Actor* src);
+
+	-Actor:
+		//Constructor for Actor that initializes all of Actor's data members (such as m_isActive) that are used/accessed by the other member functions of Actor. Also, through the use of an initializer list, passes certain values/parametes to GraphObject, which Actor publicly inherits from.
+		Actor(int imageID, double startX, double startY, int direction, int depth, StudentWorld* world);
+		
+		//Accessor functions for Actor's data members (just returns the value itself). These were made in the Actor class as a way to ensure that every object derived from Actor had these data members/attributes, and could access the private members through these accessor functions.
+		bool isDead();
+		bool isInfected();
+		bool isActive();
+		int getLifeTicks();
+		StudentWorld* getWorld();
+		
+		//Modifier functions that directly change/assign a new value to the respective data member, returning the value assigned. Included in this class for all derived classes' use.
+		void setDead();
+		bool setInfected(bool value);
+		bool setActive(bool value);
+		int setLifeTicks(int value);
+
+		//"Attribute functions" that are defined as default returning false in this Actor base class. These functions were made as a way to distinguish the different attributes and properties that each specific class derived from Actor exhibits. Therefore, the reason these functions are in the Actor base class is because each Actor either does or does not have these certain attributes, and therefore allows for generalizing of functions that process all the Actor pointers. Additionally, the reason this function was made virtual was to ensure that each derived class from Actor has the ability to redefine the function and "gain" the attribute by instead returning 'true'.
+		virtual bool isInfectable();
+		virtual bool isDamageable();
+		virtual bool blocksMovement();
+		virtual bool blocksFire();
+		virtual bool isSavable();
+		virtual bool isFriendly();
+		virtual bool isEvil();
+		virtual bool canPickUp();
+		virtual bool canActivateTraps();
+		
+		//function that properly deals with an Actor when a hazard presents itself to the Actor. At this level, the function simply returns, as not all derived classes of Actors can be killed by a Hazard. However, if a derived class of Actor is able to be killed by a Hazard, then at that level it can redefine the function to perform specific behaviors as needed. Having the function at this level is crucial so that it allows for a generalizing of functions that deal with calling this same function on all of the pointers to Actors in a list (i.e. some of StudentWorld's functions).
+		virtual void killByHazard();
+		
+		//pure virtual doSomething() public member function is placed in the Actor base class in order to ensure that not only a user cannot create an instance of just an "Actor", but also so that every single derived class from Actor is required to redefine the doSomething() method. This is particularly advantageous because each actor has its own specific behaviors during each tick to perform.
+		virtual void doSomething() = 0;
+
+	-Character:
+		//Constructor for Characater that initializes all of Character's data members (such as m_isParalyzed) that are used/accessed by other public member functions of Character. Also, through the use of an initializer list, passes certain values/parameters to Actor, which Character publicly inherits from.
+		Character(int imageID, double startX, double startY, StudentWorld* world);
+		
+		//Accessor functions for Character-specific data members (just returns the value itself). These were made in the Character class as a way to ensure that every object derived from Character had these data members/attributes, and could access the private members through these accessor functions.
+		bool isParalyzed();
+		int getInfectedCount();
+
+		//Modifier functions that directly change/assign a new value to the respective data member, returning the value assigned. Included in this class for all derived classes' use.
+		bool setParalyzed(bool value);
+		int setInfectedCount(int value);
+
+		//"Attribute functions" that are redefining the Actor's base class function to instead return true. These functions were made as a way to distinguish the different attributes and properties that each specific class derived from Actor exhibits. This function was made virtual just out of good style/practice (not needed in derived function).
+		virtual bool canActivateTraps();
+		virtual bool blocksMovement();
+		virtual bool isDamageable();
+
+	-Penelope:
+		//Constructor for Penelope that initializes all of Penelope's data members (such as m_supplyLandmines) that are used/accessed by other public member functions of Penelope. Also, through the use of an initializer list, passes certain values/parameters to Character, which Penelope publicly inherits from.
+		Penelope(double startX, double startY, StudentWorld* world);
+		
+		//redefinition of Actor's pure virtual doSomething() function. This function checks if Penelope is dead, then if shes not dead, handle her infected status and count correctly. The function also checks for readily-available user input, and acts accordingly (moves if movement key and can move to the new position, or introduce flames/landmine/use vaccine for other keys). Virtual out of good practice (not required).
+		virtual void doSomething();
+
+		//redefinition of Actor's killByHazard() function. This function simply sets Penelope to "dead". Virtual out of good practice (not required).
+		virtual void killByHazard();
+		
+		//"Attribute functions" that are redefining the Actor's base class function to instead return true. These functions were made as a way to distinguish the different attributes and properties that each specific class derived from Actor exhibits. This function was made virtual just out of good style/practice (not needed in derived function).
+		virtual bool isFriendly(); Virtual out of good practice (not required).
+		virtual bool canPickUp();
+		virtual bool isInfectable();
+
+		//Accessor functions for Penelope-specific data members (just returns the value itself). Since these data members are unique to Penelope herself, these data members are only in the Penelope class, and can only be accessed by Penelope.
+		int getSupplyLandmines();
+		int getSupplyFlamethrower();
+		int getSupplyVaccines();
+
+		//Modifier functions that directly change/assign a new value to the respective data member, returning the value assigned. Included in this class for any classes use.
+		int incSupplyLandmines(int amount);
+		int incSupplyFlamethrower(int amount);
+		int incSupplyVaccines(int amount);
+
+	-Wall:
+		//Constructor for Wall. Through the use of an initializer list, passes certain values/parameters to Actor, which Wall publicly inherits from.
+		Wall(double startX, double startY, StudentWorld* world);
+
+		//redefinition of Actor's pure virtual doSomething() function. Wall's doSomething() method simply does nothing! Virtual out of good practice (not required).
+		virtual void doSomething();
+
+		//"Attribute functions" that are redefining the Actor's base class function to instead return true. These functions were made as a way to distinguish the different attributes and properties that each specific class derived from Actor exhibits. This function was made virtual just out of good style/practice (not needed in derived function).
+		virtual bool blocksMovement();
+		virtual bool blocksFire();
+		
+	-Exit:
+		//Constructor for Exit. Through the use of an initializer list, passes certain values/parameters to Actor, which Exit publicly inherits from.
+		Exit(double startX, double startY, StudentWorld* world);
+
+		//redefinition of Actor's pure virtual doSomething() function. Exit's doSomething() function checks if it is overlapping with any Citizens (and saves them if it is) first, and then checks if it is overlapping with Penelope (but only if no more citizens remain alive on the level), ending the level if it is. Virtual out of good practice (not required).
+		virtual void doSomething();
+
+		//"Attribute functions" that are redefining the Actor's base class function to instead return true. These functions were made as a way to distinguish the different attributes and properties that each specific class derived from Actor exhibits. This function was made virtual just out of good style/practice (not needed in derived function).
+		virtual bool blocksFire();
+		
+	-Citizen:
+		//Constructor for Citizen. Through the use of an initializer list, passes certain values/parameters to Actor, which Citizen publicly inherits from.
+		Citizen(double startX, double startY, StudentWorld* world);
+		
+		//redefinition of Actor's pure virtual doSomething() function. The function checks if the Citizen is dead, and, if not, then behaves with respect to the citizen's infected count if it has one (dies if high enough, and potentially creates a zombie). The function then checks if this tick is to be a "paralysis" tick for Citizen (i.e. immediately return). Then, the citizen determines the direction and location it wants to move to based on the proximity of the player and any Zombie (potentially not moving at all if nothing is close enough or no open spot is advantageous for the Citizen to move to).
+		virtual void doSomething();
+
+		//"Attribute functions" that are redefining the Actor's base class function to instead return true. These functions were made as a way to distinguish the different attributes and properties that each specific class derived from Actor exhibits. This function was made virtual just out of good style/practice (not needed in derived function).
+		virtual bool isInfectable();
+		virtual bool isFriendly();
+		virtual bool isSavable();
+
+		//redefinition of Actor's killByHazard() function. This function simply sets the Citizen to dead, plays a specific sound, and increases the score respectively. Virtual out of good practice (not required).
+		virtual void killByHazard();
+
+	-Zombie:
+		//Constructor for Zombie that initializes Zombie's data member (m_movementPlan) that is used/accessed by other public member functions of Zombie. Also, through the use of an initializer list, passes certain values/parameters to Character, which Zombie publicly inherits from.
+		Zombie(double startX, double startY, StudentWorld* world);
+
+		//Accessor function for Zombie-specific data members (just returns the value itself). These were made in the Zombie class as a way to ensure that every object derived from Zombie had these data members/attributes, and could access the private members through these accessor functions.
+		int getMovementPlan();
+		
+		//Modifier functions that directly change/assign a new value to the respective data member, returning the value assigned. Included in this class for any classes access to modifying movementPlan.
+		int setMovementPlan(int value);
+		int decMovementPlan();
+
+		//"Attribute functions" that are redefining the Actor's base class function to instead return true. These functions were made as a way to distinguish the different attributes and properties that each specific class derived from Actor exhibits. This function was made virtual just out of good style/practice (not needed in derived function).
+		virtual bool isEvil();
+
+	-DumbZombie:
+		//Constructor for DumbZombie. Through the use of an initializer list, passes certain values/parameters to Zombie, which DumbZombie publicly inherits from.
+		DumbZombie(double startX, double startY, StudentWorld* world);
+		
+		//redefinition of Actor's pure virtual doSomething() function. Checks if already dead, checks if paralyzed, and acts accordingly. Calculates vomit coordinates in front of it and sees if it would overlap with any infectable Actor, producing the vomit if it does at a 1/3 rate (plays a sound too!). The function also checks and updates the movementPlan of the Zombie if needed (updates are in a random direction). Virtual out of good practice.
+		virtual void doSomething();
+
+		//redefinition of Actor's killByHazard() function. This function simply sets the DumbZombie to dead, plays a sound, increases the score, and potentially introduces a VaccineGoodie at a random direction around it at a 1/10 chance (assuming the chosen location is valid for the VaccineGoodie to be placed). Virtual out of good practice.
+		virtual void killByHazard();
+
+	-SmartZombie:
+		//Constructor for SmartZombie. Through the use of an initializer list, passes certain values/parameters to Zombie, which SmartZombie publicly inherits from.
+		SmartZombie(double startX, double startY, StudentWorld* world);
+		
+		//redefinition of Actor's pure virtual doSomething() function. Checks if already dead, checks if paralyzed, and acts accordingly. Calculates vomit coordinates in front of it and sees if it would overlap with any infectable Actor, producing the vomit if it does at a 1/3 rate (plays a sound too!). The function also checks and updates the movementPlan of the Zombie if needed (updates are in the direction that is to the closest Citizen/Penelope). Virtual out of good practice.
+		virtual void doSomething();
+
+		//redefinition of Actor's killByHazard() function. This function simply sets the SmartZombie to dead, plays a sound, increases the score. Virtual out of good practice.
+		virtual void killByHazard();
+
+	-Vomit:
+		//Constructor for Vomit. Through the use of an initializer list, passes certain values/parameters to Actor, which Vomit publicly inherits from.
+		Vomit(double startX, double startY, int direction, StudentWorld* world);
+		
+		//redefinition of Actor's pure virtual doSomething() function. Checks if already dead, checks number of life ticks left, and acts accordingly. During every life tick, it calls the infectAllOverlapping() function from StudentWorld. Virtual out of good practice.
+		virtual void doSomething();
+
+	-Flame:
+		//Constructor for Flame. Through the use of an initializer list, passes certain values/parameters to Actor, which Flame publicly inherits from.
+		Flame(double startX, double startY, int direction, StudentWorld* world);
+		
+		//redefinition of Actor's pure virtual doSomething() function. Checks if already dead, checks number of life ticks left, and acts accordingly. During every life tick, it calls the damageAllOverlapping() function from StudentWorld. Virtual out of good practice.
+		virtual void doSomething();
+
+	-Pit:
+		//Constructor for Pit. Through the use of an initializer list, passes certain values/parameters to Actor, which Pit publicly inherits from.
+		Pit(double startX, double startY, StudentWorld* world);
+		
+		//redefinition of Actor's pure virtual doSomething() function. Calls the damageAllOverlapping() function from StudentWorld. Virtual out of good practice.
+		virtual void doSomething();
+
+	-Goodie:
+		//Constructor for Goodie. Through the use of an initializer list, passes certain values/parameters to Actor, which Goodie publicly inherits from.
+		Goodie(int imageID, double startX, double startY, StudentWorld* world);
+
+		//redefinition of Actor's pure virtual doSomething() function. Checks if dead, and acts accordingly (just returns). Checks overlap with all objects that have canPickup attribute, increasing score, setting itself to dead, playing a sound, and calling pure virtual updateSupply() function. Virtual out of good practice.
+		virtual void doSomething();
+		
+		//pure virtual function that is to be redefined by all classes derived from Goodie class. This is done in order to ensure that all Goodies implement the updateSupply function in a different way, as each Goodie corresponds to updating a different supply data member in Penelope's class.
+		virtual void updateSupply() = 0;
+		
+		//"Attribute functions" that are redefining the Actor's base class function to instead return true. These functions were made as a way to distinguish the different attributes and properties that each specific class derived from Actor exhibits. This function was made virtual just out of good style/practice (not needed in derived function).
+		virtual bool isDamageable();
+		
+		//redefinition of Actor's killByHazard() function. This function simply sets the Goodie to dead. Virtual out of good practice.
+		virtual void killByHazard();
+
+	-VaccineGoodie:
+		//Constructor for VaccineGoodie. Through the use of an initializer list, passes certain values/parameters to Actor, which VaccineGoodie publicly inherits from.
+		VaccineGoodie(double startX, double startY, StudentWorld* world);
+
+		//definition of Goodie's updateSupply() pure virtual function. This function properly calls the VaccineSupply-updating function from StudentWorld. Virtual out of good practice/style.
+		virtual void updateSupply();
+
+	-GasCanGoodie:
+		//Constructor for GasCanGoodie. Through the use of an initializer list, passes certain values/parameters to Actor, which GasCanGoodie publicly inherits from.
+		GasCanGoodie(double startX, double startY, StudentWorld* world);
+
+		//definition of Goodie's updateSupply() pure virtual function. This function properly calls the FlamethrowerSupply-updating function from StudentWorld. Virtual out of good practice/style.
+		virtual void updateSupply();
+
+	-LandmineGoodie:
+		//Constructor for LandmineGoodie. Through the use of an initializer list, passes certain values/parameters to Actor, which LandmineGoodie publicly inherits from.
+		LandmineGoodie(double startX, double startY, StudentWorld* world);
+
+		//definition of Goodie's updateSupply() pure virtual function. This function properly calls the LandmineSupply-updating function from StudentWorld. Virtual out of good practice/style.
+		virtual void updateSupply();
+
+	-Landmine:
+		//Constructor for Landmine that initializes Landmine's data member (such as m_safetyTicks) that is used/accessed by the other member functions of Landmine. Also, through the use of an initializer list, passes certain values/parametes to Actor, which Landmine publicly inherits from.
+		Landmine(double startX, double startY, StudentWorld* world);
+
+		//redefinition of Actor's pure virtual doSomething() function. Checks if dead, checks if on safety, and acts accordingly (just returns/decrements safetyTicks). Checks overlap with all objects that have canActivateTraps attribute and calls its own killByHazard function if something is overlapping. Virtual out of good practice.
+		virtual void doSomething();
+		
+		//"Attribute functions" that are redefining the Actor's base class function to instead return true. These functions were made as a way to distinguish the different attributes and properties that each specific class derived from Actor exhibits. This function was made virtual just out of good style/practice (not needed in derived function).
+		bool isOnSafety();
+
+		//redefinition of Actor's killByHazard() function. This function simply sets the Landmine to dead, plays a sound, and introduces a pit at its location and 9 flames around it (assuming it can be created at the respective location). Virtual out of good practice.
+		virtual void killByHazard();
+
+2. All of the functionality of ZombieDash specificed by the specification has been implemented with no known bugs.
+
+3. Other design decisions/assumptions:
+	-As I further implemented my original designs for the overall class hiearchy of the project, certain classes (such as a "Hazard" class) I simplified out of the overall design, as no other general functionality elements were being shared by the classes in that base class (and therefore was unnecessary).
+
+4. Description of how I tested each class:
+	-StudentWorld: In order to test my StudentWorld class and all of its public member functions, I set up multiple custom levelXX.txt files that tested each and every small functionality inherit in the class. One of the custom levels was improperly formatted,
+	which tested to make sure that the init() function returned an error as expected, and another level included at least one of each Actor object, which tested if the init() function could properly create each respective Actor class. Throughout each of the
+	various conditional statements and loops, cerr statements were added (and removed as needed) to ensure proper behavior was happening given a certain situation (i.e. testing if CleanUp() successfully deletes all Actors). For the family of Boundary, Overlapping,
+	and Nearest functions, cerr statements that printed out the raw distance values that a specific Zombie/Citizen was recieving from these function calls were added and verified by observation (seeing if the behavior on screen is the same as what is stated in the
+	specification). For the updateSupply, gain simple cerr statements ensured that all the proper function calls were being made. For the updateStatLine function, extreme inputs (such as negative values or large score/level/supply values) were given to the function,
+	along with a cerr statement printing out the exact string constructed was added and inspected.
+	
+	-Actor: Since Actor is an abstract base class for the rest of the classes that were implemented in ZombieDash (other than StudentWorld, of course), most of the testing of the Actor class is done indirectly through the testing of the other classes. However,
+	that being said, multiple tests were still made on the Actor base class. Multiple cerr statements were introduced throughout each of the member functions before/after variables were given values, within conditional statements and loops, and even before returning
+	from a function, which allowed for bugtesting via inspection of the cerr output stream and comparing to what is expected. Additionally, multiple assert statements in a dummy main method were utilized to check the return value of these functions (both accessor
+	and modifying public member functions).
+
+	-Character: Since Character is an abstract base class for the Penelope, Citizen, and Zombie classes, most of the testing of the Character class is done indirectly through the testing of its derived classes. However, that being said, multiple tests were conducted
+	on the Character base class. Just like with the tests for the Actor base class, multiple assert statements in a dummy main method ensured that the proper values that were to be expected were being outputted from Character's public member functions (including accessor
+	functions and modifying functions). Additionally, attempts to make objects of Actor/Character in the dummy main method were made in order to make sure that the design of the class hierachy does not allow for illogical Actor/Character objects to be in existence.
+
+	-Penelope: In order to test the Penelope class, numerous tests were carried out. One of these tests including attempting to input every key that can be pressed on the keyboard, and ensuring that Penelope properly responds to each key press (i.e. only responds
+	to the movement keys, place landmine/shoot flamethrower, and pause/quit keys. Additionally, to test for Penelope's interactions with other classes of Actor, I had Penelope get vomitted on multiple times by each DumbZombies and SmartZombies, ensuring that the infected
+	value and status of Penelope was that which is expected. Additionally, testing Penelope's private data members of her supply was carried out through the stateLine and through introducing multiple cerr printouts throughout the code just as done with the other classes.
+	Additonally, to test for Penelope's interaction with being killed by a hazard, I had Penelope activate a landmine while standing close enough from it to have Flames overlap with Penelope after being created during that tick, making sure that Penelope then behaves in
+	the right manner. To test for Penelope's blocking of other's movements, I had both Zombies and Citizens attempt to move onto Penelope, expecting that they would not be able to, as Penelope's bounding box cannot at all intersect with some other object.
+
+	-Wall: Wall itself (as a class publicly derived from Actor) does not fundamentally do much, and therefore there is not much to test for Wall that is not already tested through the tests for other classes. However, again, that being said, having Penelope throw out multiple
+	flames from varying distances in front of a wall were utilized to test a Wall's ability to be damaged by/block the creation of a flame that intersects the Wall's bounding box. Additionally, testing the bounding box of the wall even further, running into the wall as Penelope
+	and letting Citizens run away from Zombies into walls and Zombies randomly run into walls were three other tests that were conducted to test the Wall actor class. For testing that a wall cannot be infected by vomit, no achievable test within easy reach could be made, however
+	if you allow Penelope to intersect (and run through) walls, you can test this interaction that ensures that Wall cannot be infected by Vomit.
+
+	-Exit: Just like the Wall actor class that is publicly derived from Actor, the Exit class does not do too much in terms of behavior requirements and interactions with other classes, and therefore not many unique tests are needed to be conducted on the Exit class alone. One of
+	these few tests, however, is bringing a Citizen over to the Exit with Penelope, however Penelope overlaps the Exit first. This tests to make sure that the level will not finish until all of the Citizens are first saved. Another test is attempting to fire flames via Penelope's
+	flamethrower onto the Exit, expecting the Exit to block all of the flames from even being created (and therefore not even taking damage from flames). Additionally, checking to make sure that Exit's cannot be infected by vomit is completed by inserting multiple cerr statements
+	into the code, and observing the output to the console. To test the blocking of movement (which should be none), all moving Characters were tested overlapping with the Exit at different points in the game (i.e. when all Citizens still present, when some Citizens are still
+	present, when all Zombies are gone, etc.).
+
+	-Citizen:
+	-Zombie:
+	-DumbZombie:
+	-SmartZombie:
+	-Vomit:
+	-Flame:
+	-Pit:
+	-Goodie:
+	-VaccineGoodie:
+	-GasCanGoodie:
+	-LandmineGoodie:
+	-Landmine:
