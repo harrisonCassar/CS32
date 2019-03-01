@@ -307,6 +307,7 @@
 
 3. Other design decisions/assumptions:
 	-As I further implemented my original designs for the overall class hiearchy of the project, certain classes (such as a "Hazard" class) I simplified out of the overall design, as no other general functionality elements were being shared by the classes in that base class (and therefore was unnecessary).
+	-Before the updates of the specification added recently, I made the assumption that the StatLine should be closer matching that shown in the sample executable file, as well as that the VaccineGoodies dropped by DumbZombies should only be "killable" after the tick they spawn in on, and others now covered by the latest updates.
 
 4. Description of how I tested each class:
 	-StudentWorld: In order to test my StudentWorld class and all of its public member functions, I set up multiple custom levelXX.txt files that tested each and every small functionality inherit in the class. One of the custom levels was improperly formatted,
@@ -333,7 +334,7 @@
 
 	-Wall: Wall itself (as a class publicly derived from Actor) does not fundamentally do much, and therefore there is not much to test for Wall that is not already tested through the tests for other classes. However, again, that being said, having Penelope throw out multiple
 	flames from varying distances in front of a wall were utilized to test a Wall's ability to be damaged by/block the creation of a flame that intersects the Wall's bounding box. Additionally, testing the bounding box of the wall even further, running into the wall as Penelope
-	and letting Citizens run away from Zombies into walls and Zombies randomly run into walls were three other tests that were conducted to test the Wall actor class. For testing that a wall cannot be infected by vomit, no achievable test within easy reach could be made, however
+	and letting Citizens run away from Zombies into walls and Zombies randomly running into walls were three other tests that were conducted to test the Wall actor class. For testing that a wall cannot be infected by vomit, no achievable test within easy reach could be made, however
 	if you allow Penelope to intersect (and run through) walls, you can test this interaction that ensures that Wall cannot be infected by Vomit.
 
 	-Exit: Just like the Wall actor class that is publicly derived from Actor, the Exit class does not do too much in terms of behavior requirements and interactions with other classes, and therefore not many unique tests are needed to be conducted on the Exit class alone. One of
@@ -342,15 +343,58 @@
 	into the code, and observing the output to the console. To test the blocking of movement (which should be none), all moving Characters were tested overlapping with the Exit at different points in the game (i.e. when all Citizens still present, when some Citizens are still
 	present, when all Zombies are gone, etc.).
 
-	-Citizen:
-	-Zombie:
-	-DumbZombie:
-	-SmartZombie:
-	-Vomit:
-	-Flame:
-	-Pit:
-	-Goodie:
-	-VaccineGoodie:
-	-GasCanGoodie:
-	-LandmineGoodie:
-	-Landmine:
+	-Citizen: Testing the Citizen class (since it was one of the largest classes in terms of the number of functionalities it needed to have) involved numerous tests/testing methods that are mostly similar to the tests for the other classes as well. A couple of the most simple tests
+	included simply creating an instance of a Citizen Actor in an empty (but still properly-formatted) level. In order to test the Citizen's AI, and detecting when Penelope is within a close-enough range, this was done by observation of how the Citizen reacts to an approaching player.
+	The same situation was utilized to also test the Citizen's response to a Zombie (either dumb and smart) approaching the Citizen at a much closer distance than the Penelope. Additionally, to test the Citizen's decision-making in only moving to the best possible movements, the last
+	two tests described were combined, and the game itself was paused, and advanced one tick at a time, which was coupled with cerr statements outputting the Citizen's distance calculations and decisions with each tick. These same tests were conducted with the Citizen starting in the
+	center, side, and corner of the map to ensure that the Wall's bounding boxes were being considered as well as invalid positions for the Citizen to move to. For testing being damaged by flames, Penelope simply triggered her flamethrower directly onto the Citizen, and the resultant
+	behavior was then observed (this test was also repeated for a Citizen walking into a Pit and a Landmine as well). In terms of testing for being properly infected (and eventually converting to a SmartZombie OR DumbZombie), I created a custom level that had an enclosed area with
+	numerous Citizens and a couple zombies, testing to make sure that the Citizen properly becomes infected and updates its infected count with every tick (this was checked with more cerr statements spread throughout Citizen's doSomething() function). To test Citizen's blocking of
+	movement, Penelope attempted to run into Citizen from all different directions, as well as letting Zombies try to run into the Citizen as well. For testing to make sure Citizen does not block flames, again Penelope would simply fire a flamethrower charge onto a Citizen.
+	
+	-Zombie: Since Zombie is an abstract base class which DumbZombie and SmartZombie both publicly inherit from, the testing for this class was mostly done indirectly through the testing for the DumbZombie and SmartZombie classes. However, that being said, Zombie as an overall class
+	did hold the functionality for the Zombie's movement plan used in the Zombies' AI, and therefore tests for this functionality (as well as some attribute accessor functions returning the correct values) were conducted. One of these tests included again having cerr statements spread
+	throughout the Zombie's public member function implementations, and simply letting the game run and inspecting the outputted values for what is expected. Additionally, cerr statements were embedded throughout the StudentWorld functions that call Zombie's "attribute" function isEvil()
+	to make sure that Zombie was being properly recognized as an "evil" actor.
+
+	-DumbZombie: Publicly inheriting from the Zombie class overall, the DumbZombie class was tested in several different ways (and in many of the same ways as SmartZombie). To test DumbZombie's paralysis ticks, again cerr statements were introduced, and a test game was started with several
+	Zombies present and instantly paused so that an inspection of the monitor during every other tick could be conducted. Tests for the Zombie's post-death behaviors included killing a DumbZombie with a landmine trigger, a flamethrower charge from Penelope, and falling down a Pit during a
+	regular game, checking to make sure the proper sound and proper updating of the player's score were completed by the DumbZombie. To make sure DumbZombie's weren't infectable, the only way that a full test could be completed is by temporarily removing the Zombie's ability to move and
+	spawning a Player and two Zombies right next to each other via the levelXX.txt file. In addition, the DumbZombie's ability to block movement was removed, and the test was conducted by Penelope moving onto one of the two DumbZombie's, triggering the other Zombie to vomit onto Penelope
+	and the other Zombie. Then, cerr statements were used to print out the infected status of the two DumbZombies. For testing that DumbZombies do not block flames, Penelope simply shot a flamethrower charge onto the Zombie at multiple different directions and positions.
+
+	-SmartZombie: Publicly inheriting from the Zombie class overall, the SmartZombie class was tested in many of the same ways as the Citizen class was tested. Just like in the Citizen class, numerous cerr statements were introduced throughout the SmartZombie's AI so that I could monitor
+	the distance values that were being calculated by the AI itself. Additonally, to test SmartZombie's paralysis ticks, again cerr statements were introduced, and a test game was started with several Zombies present and instantly paused so that an inspection of the monitor during every
+	other tick could be conducted. Tests for the Zombie's post-death behaviors included killing a SmartZombie with a landmine trigger, a flamethrower charge from Penelope, and falling down a Pit during a regular game, checking to make sure the proper sound and proper updating of the
+	player's score were completed by the SmartZombie. To make sure SmartZombie's weren't infectable, the only way that a full test could be completed is by temporarily removing the Zombie's ability to move and spawning a Player and two Zombies right next to each other via the levelXX.txt file.
+	In addition, the SmartZombie's ability to block movement was removed, and the test was conducted by Penelope moving onto one of the two SmartZombie's, triggering the other Zombie to vomit onto Penelope and the other Zombie. Then, cerr statements were used to print out the infected status
+	of the two SmartZombies. For testing that SmartZombies do not block flames, Penelope simply shot a flamethrower charge onto the Zombie at multiple different directions and positions.
+
+	-Vomit: Just like the Wall class, the Vomit object does not do much other than infect all infectable objects that it overlaps with during its alive ticks, and therefore the number of tests were quite minimal and simple. To test for a Vomit object being alive for the proper amount of ticks
+	(its lifeTicks), cerr statements were introduced in the Vomit's doSomething() function whenever its lifeTicks were updated, allowing for me to monitor its value after one tick differences during the actual game itself. Additionally, to check that Vomit could not be infected, a very similar
+	test to the Zombie test for being not infectable was conducted (almost literally the same setup, but instead Penelope was placed in between two Zombies, and only cerr statements were added for the Vomit isInfectable calls). To check for Vomit not blocking other objects from moving nearby/onto it,
+	this was done by simple observation during a regular game (observation was also used to make sure Vomit could not be damaged by a flame, coupled with the test for the lifeTicks).
+
+	-Flame: Similar to the Vomit class, the Flame class was tested by trying to spawn Flames on every type of object in the game via using Penelope's flamethrower charges. To test to make sure a flame cannot be damaged by another Flame, the lifeTicks for the Flame class object was modified so
+	that the Flame does not have any lifeTick amount (meaning it will stay alive forever until the end of the level). Then, multiple charges of the flamethrower were used by Penelope in the same position, having Flames overlap other Flames. The same test was conducted for the interaction between
+	Vomit and Flames, where Vomit's lifeTicks limit was removed, and Flamethrower charges were used by Penelope on the Vomit. To test for a lack of ability to block other objects from moving onto the Flame, the same test was carried out with Penelope/Citizens/Zombies moving onto the Flame objects
+	that were present in the game level.
+
+	-Pit: Similar to the Flame and Vomit class, the Pit class was tested by simply running Penelope, multiple Citizens, and both DumbZombies and SmartZombies into the Pit and ensuring they perform with the proper behavior. To test for Pit's lack of being damageable by Flames and infectable by Vomit,
+	throwing flames via Penelope's flamethrower charges on any level in the game. For vomit, the test was a little more difficult to produce: First, Penelope was made to not be killed by Pits, and Zombies' abilities to move around the level were removed. A Zombie was then spawned right next to a Pit,
+	and then Penelope moves on top of the Pit's position in order to induce the Zombie to vomit on the Pit and Penelope together. To make sure the Pit was responding correctly to the overlap with vomit (i.e. not reacting at all), cerr statements were introduced in the "infectAllOverlapping" function
+	of StudentWorld.
+
+	-Goodie: The Goodie class stands as an abstract base class for all of the current Goodies implemented in the game. Since this class is an abstract base class, the testing for this class is mostly done indirectly through the testing for the 3 implemented Goodies. However, that being said, tests
+	for this overall Goodie class were conducted to check for the proper behavior being done during each tick. Including cerr statements throughout the doSomething() before and after every function call (for updating Penelope's supply of respective Goodies) helped to easily monitor the behaviors that
+	resulted from overlapping Penelope (properly updating Penelope's supply), or a Flame on a Goodie (properly destroying the Goodie).
+	
+	-VaccineGoodie, GasCanGoodie, LandmineGoodie: In order to avoid repetition, these three classes were combined into one description of the testing methods, as the testing methods for all of these Goodie classes were virtually same. For testing each of these classes, multiple instances of each Goodie
+	were spawned in on a level and then subsequently damaged via a Flamethrower charge from Penelope, as well as Flames spawned from a Landmine being triggered. To test if the Goodies cannot be infected by Vomit, the same test as the other not-infectable class objects were done with each of the Goodies,
+	which is composed of removing Penelope's ability to pickup the Goodies, spawning a Zombie next to a Goodie, and having Penelope walking onto the Goodie so that the Zombie is induced to vomit onto Penelope and the Goodie (and, of course, cerr statements were used to monitor the infected status, or lack
+	of one, of each of the Goodies). For testing the lack of ability to block class objects from moving onto it, games were just played with all implementations/functionalities active.
+
+	-Landmine: Testing Landmine was mostly done by simply playing the game and using Penelope to place Landmines at certain positions around the various custom levels that I made. Then, by observation of the actual game console (and the error output console as well), the behavior of all of the interactions
+	and the actual spawning of Flames and a Pit Actor object around/on the same position of the Landmine were monitored closely. For example, making sure that the Flames are not spawned past Walls by placing and triggering Landmines that were right next to Wall objects. Additionally, tests to make sure
+	Landmines properly trigger upon Penelope, Citizens, or Zombies stepping on the Landmine were done by physically moving Penelope onto the Landmine, as well as leading Citizens and Zombies to walk onto the Landmine. Additionally, to test that Landmines cannot be infected by Vomit, the functionality
+	that triggers Landmines were removed, and Penelope is moved onto the Landmine and a Zombie spawned next to the Landmine so that it vomits onto Penelope and Landmine.
