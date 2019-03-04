@@ -1,3 +1,8 @@
 2. The reason why the call to Set<Coord>::insert causes at least one compilation error is because the Coord class does not properly define a comparison operator for the object. Therefore when the insert function utilizes the comparison operator (as well as calling the findFirstAtLeast function which also uses the '<' operator), the code does not know how to properly compare two Coord class objects.
 
 3b. The reason why we would not be able to solve it recursively with only the one-parameter overload of the listAll function is because there would be no way of properly printing the tree path structures, as subsequent calls of the recursive function wouldn't be able to know where in the "directory" or how far down their "path" is, as the only information given to it is the current menu item itself.
+
+4a. The time complexity of the algorithm is O(N^3), as the worse case scenario is that all of the 3 loops will be run N times each. Since these loops are nested within each other, the N operations of the second loop will be run N times, and the very inner loop's N operations will be run N^2 times.
+
+4b. The time complexity of this algorithm is still O(N^3) because as N approaches larger and larger values, the second loop (the one with a loop limit of i now instead of N) will be essentially running until much larger values itself, and therefore it can be treated as its loop limit being N instead of i. Additionally, one could argue mathematically that this time complexity holds true, as the sum of operations (or loop runs) in a nested two-loop system similar to this would be 1 + 2 + 3 + ... N-1 + N, which sums to (N)(N+1)/2, where its largest exponential value would be N^2 (which, when multipled by the 3rd nested loop's N operations would become N^3).
+
