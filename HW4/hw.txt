@@ -1,3 +1,3 @@
 2. The reason why the call to Set<Coord>::insert causes at least one compilation error is because the Coord class does not properly define a comparison operator for the object. Therefore when the insert function utilizes the comparison operator (as well as calling the findFirstAtLeast function which also uses the '<' operator), the code does not know how to properly compare two Coord class objects.
 
-3. 
+3b. The reason why we would not be able to solve it recursively with only the one-parameter overload of the listAll function is because there would be no way of properly printing the tree path structures, as subsequent calls of the recursive function wouldn't be able to know where in the "directory" or how far down their "path" is, as the only information given to it is the current menu item itself.
