@@ -1,0 +1,3 @@
+2. The reason why the call to Set<Coord>::insert causes at least one compilation error is because the Coord class does not properly define a comparison operator for the object. Therefore when the insert function utilizes the comparison operator (as well as calling the findFirstAtLeast function which also uses the '<' operator), the code does not know how to properly compare two Coord class objects.
+
+3. 
