@@ -38,7 +38,7 @@ private:
 
 	void destructAllChildren(Node* cur);
 	Node* findChild(Node* parent, char label);
-	std::vector<ValueType> findHelper(Node* child, const std::string& key, int index);
+	std::vector<ValueType> findHelper(Node* child, const std::string& key, int index, int alterationDegree);
 
 	Node* m_root;
 };
@@ -110,12 +110,10 @@ Trie<ValueType>::Node* Trie<ValueType>::findChild(Node* parent, char label)
 	if (parent->children.empty())
 		return nullptr;
 
-	std::vector<ChildNodePtr>::iterator it = parent->children.begin();
-
-	while (it != parent->children.end())
+	for (std::vector<ChildNodePtr>::iterator it = parent->children.begin(); it != parent->children.end(); it++)
 	{
-		if ((*it).label == label)
-			return (*it).child;
+		if (it->label == label)
+			return it->child;
 	}
 
 	return nullptr;
@@ -124,11 +122,22 @@ Trie<ValueType>::Node* Trie<ValueType>::findChild(Node* parent, char label)
 template<typename ValueType>
 std::vector<ValueType> Trie<ValueType>::find(const std::string& key, bool exactMatchOnly) const
 {
-	return findHelper(m_root, key, 0);
+	Node* child = nullptr;
+
+	for (std::vector<ValueType>::iterator it = m_root->children.begin(); it != cur->children.end(); it++)
+	{
+		if (it->label == key[0])
+			child = it->child;
+	}
+
+	if (exactMatchOnly)
+		return findHelper(child, key, 1, 0);
+	else
+		return findHelper(child, key, 1, 1); 
 }
 
 template <typename ValueType>
-std::vector<ValueType> Trie<ValueType>::findHelper(Node* cur, const std::string& key, int index)
+std::vector<ValueType> Trie<ValueType>::findHelper(Node* cur, const std::string& key, int index, int alterationDegree)
 {
 	if (cur == nullptr)
 	{
@@ -141,15 +150,28 @@ std::vector<ValueType> Trie<ValueType>::findHelper(Node* cur, const std::string&
 
 	Node* child = findChild(cur, key[index]);
 
-	if (child == nullptr)
+	std::vector<ValueType> associatedValues;
+
+	if (alterationDegree != 0)
 	{
-		std::vector<ValueType> temp;
-		return temp;
+		for (std::vector<ValueType>::iterator it = cur->children.begin(); it != cur->children.end(); it++)
+		{
+			if (it->child == child)
+				continue;
+
+			//add each other child to associated values
+			std::vector<ValueType> temp = findHelper(it->child, key, index + 1, alterationDegree - 1);
+			associatedValues.insert(associatedValues.begin(), temp.begin(), temp.end());
+		}
 	}
-	else
+	
+	if (child != nullptr)
 	{
-		return findHelper(child, key, index + 1);
+		std::vector<ValueType> temp = findHelper(child, key, index + 1, alterationDegree);
+		associatedValues.insert(associatedValues.begin(), temp.begin(), temp.end());
 	}
+
+	return associatedValues;
 }
 
 #endif // TRIE_INCLUDED
