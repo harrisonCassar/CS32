@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <algorithm>
 #include <iostream>
 #include <fstream>
 using namespace std;
@@ -19,6 +20,13 @@ private:
 	struct Pair
 	{
 		int genomeNum;
+		int position;
+	};
+
+	struct MaxMatchCandidate
+	{
+		string genomeName;
+		int length;
 		int position;
 	};
 
@@ -41,9 +49,7 @@ void GenomeMatcherImpl::addGenome(const Genome& genome)
 		if (!genome.extract(i, minimumSearchLength(), fragment))
 			return;
 
-		Pair temp;
-		temp.genomeNum = m_curGenomeNum;
-		temp.position = i;
+		Pair temp = { m_curGenomeNum, i };
 
 		m_data.insert(fragment,temp);
 	}
@@ -61,10 +67,83 @@ bool GenomeMatcherImpl::findGenomesWithThisDNA(const string& fragment, int minim
 
 	bool foundMatch = false;
 
-	//put all potential matches into a vector, sort the vector with ordered preserved, copy over only max length ones from each Genome (beginning from beginning), and return
+	matches.clear();
+	map<string, DNAMatch> maxLengthGenomeMatch;
+
+	vector<Pair> potentialMatches = m_data.find(fragment.substr(0, minimumSearchLength()), exactMatchOnly);
+
+	for (vector<Pair>::iterator it = potentialMatches.begin(); it != potentialMatches.end(); it++)
+	{
+		string extraction = "";
+
+		bool successfulExtraction = false;
+		
+		//try to extract largest possible substr that still is >= to minimum match length
+		for (int i = fragment.size(); !successfulExtraction && i >= minimumLength; i--)
+		{
+			if (m_genomes[it->genomeNum].extract(it->position, i, extraction))
+				successfulExtraction = true;
+		}
+
+		//if no extraction made, then potential match is invalid; continue to next
+		if (!successfulExtraction)
+			continue;
+
+		int candidateLength = 0;
+		int alterationDegree = 0;
+
+		//if SNiPS are allowed
+		if (!exactMatchOnly)
+			alterationDegree = 1;
+
+		//iterate through characters, watching for SNiPS if needed, and checking length of potential match
+		for (unsigned int i = 0; i < extraction.size(); i++)
+		{
+			if (extraction[i] != fragment[i])
+			{
+				if (alterationDegree == 1)
+					alterationDegree--;
+				else
+					break;
+			}
+
+			candidateLength++;
+		}
+		
+		//if valid length for a match, then check if it is greater than previous DNA match for that Genome
+		if (candidateLength >= minimumLength)
+		{
+			map<string, DNAMatch>::iterator itmap = maxLengthGenomeMatch.find(m_genomes[it->genomeNum].name());
+			if (itmap != maxLengthGenomeMatch.end())
+			{
+				//check if candidate is strictly greater than mapped current value; replace if yes
+				if (candidateLength > itmap->second.length)
+				{
+					itmap->second.length = candidateLength;
+					itmap->second.position = it->position;
+				}
+				else if (candidateLength == itmap->second.length) //if equal, replace if position is earlier in Genome
+				{
+					if (it->position < itmap->second.position)
+						itmap->second.position = it->position;
+				}
+			}
+			else
+			{
+				DNAMatch temp = { m_genomes[it->genomeNum].name(),candidateLength,it->position };
+				maxLengthGenomeMatch[temp.genomeName] = temp;
+			}
+
+			foundMatch = true;
+		}
+	}
+
+	//since correct maxes are already found in map, just copy over DNAMatches
+	for (map<string, DNAMatch>::iterator itmap = maxLengthGenomeMatch.begin(); itmap != maxLengthGenomeMatch.end(); itmap++)
+		matches.push_back(itmap->second);
 
 	if (foundMatch)
-		return true;  // This compiles, but may not be correct
+		return true;
 	else
 		return false;
 }
@@ -72,6 +151,14 @@ bool GenomeMatcherImpl::findGenomesWithThisDNA(const string& fragment, int minim
 bool GenomeMatcherImpl::findRelatedGenomes(const Genome& query, int fragmentMatchLength, bool exactMatchOnly, double matchPercentThreshold, vector<GenomeMatch>& results) const
 {
 	return false;  // This compiles, but may not be correct
+}
+
+bool compareDNAMatches(DNAMatch a, DNAMatch b)
+{
+	if (a.genomeName == b.genomeName)
+		return a.length < b.length;
+	else
+		return false;
 }
 
 //******************** GenomeMatcher functions ********************************

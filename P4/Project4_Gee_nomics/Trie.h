@@ -93,9 +93,7 @@ void Trie<ValueType>::insert(const std::string& key, const ValueType& value)
 		}
 		else
 		{
-			ChildNodePtr temp;
-			temp.label = key[i];
-			temp.child = new Node;
+			ChildNodePtr temp = { key[i], new Node };
 			cur->children.push_back(temp);
 			cur = cur->temp.child;
 		}
