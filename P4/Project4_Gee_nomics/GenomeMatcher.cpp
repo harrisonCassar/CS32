@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <algorithm>
+#include <unordered_map>
 #include <iostream>
 #include <fstream>
 using namespace std;
@@ -150,15 +151,95 @@ bool GenomeMatcherImpl::findGenomesWithThisDNA(const string& fragment, int minim
 
 bool GenomeMatcherImpl::findRelatedGenomes(const Genome& query, int fragmentMatchLength, bool exactMatchOnly, double matchPercentThreshold, vector<GenomeMatch>& results) const
 {
-	return false;  // This compiles, but may not be correct
+	if (fragmentMatchLength < minimumSearchLength())
+		return false;
+
+	int numOfSequences = query.length() / fragmentMatchLength;
+
+	results.clear();
+
+	//running record of number of matches found for each named genome
+	map<string, int> matchesFound;
+
+	//intialize all currently-added genomes to zero
+	for (int i = 0; i < m_genomes.size(); i++)
+		matchesFound[m_genomes[i].name] = 0;
+
+	for (int i = 0; i*fragmentMatchLength < query.length(); i++)
+	{
+		string extraction = "";
+		query.extract(i, fragmentMatchLength, extraction);
+
+		vector<DNAMatch> matches;
+		if (findGenomesWithThisDNA(extraction, fragmentMatchLength, exactMatchOnly, matches))
+		{
+			for (vector<DNAMatch>::iterator it = matches.begin(); it != matches.end(); it++)
+				matchesFound[it->genomeName]++;
+		}
+	}
+
+	for (map<string, int>::iterator itmap = matchesFound.begin(); itmap != matchesFound.end(); itmap++)
+	{
+		if (itmap->second == 0)
+			continue;
+
+		double p = itmap->second / double(numOfSequences);
+
+		if (p > matchPercentThreshold)
+		{
+			GenomeMatch temp = { itmap->first,p };
+			results.push_back(temp);
+		}
+	}
+
+	//sort results, preserving stability
+	sort(results.begin(), results.end(), compareGenomeMatches);
+
+	if (results.empty())
+		return false;
+
+	return true;
 }
 
-bool compareDNAMatches(DNAMatch a, DNAMatch b)
+bool compareGenomeMatches(GenomeMatch a, GenomeMatch b)
 {
-	if (a.genomeName == b.genomeName)
-		return a.length < b.length;
-	else
-		return false;
+	//alphabetical ordering, where lowercase characters are embedded in alphabetical order: a > A > b > B...
+	if (a.percentMatch == b.percentMatch)
+	{
+		unsigned int i = 0;
+		while (i < a.genomeName.size() && i < b.genomeName.size())
+		{
+			if (a.genomeName[i] == b.genomeName[i])
+				continue;
+
+			if (islower(a.genomeName[i]))
+			{
+				if (islower(b.genomeName[i]))
+					return a.genomeName[i] < b.genomeName[i];
+				if (toupper(a.genomeName[i]) == b.genomeName[i])
+					return true;
+
+				return toupper(a.genomeName[i]) < b.genomeName[i];
+			}
+
+			if (isupper(a.genomeName[i]))
+			{
+				if (isupper(b.genomeName[i]))
+					return a.genomeName[i] < b.genomeName[i];
+				if (tolower(a.genomeName[i]) == b.genomeName[i])
+					return false;
+
+				return tolower(a.genomeName[i]) < b.genomeName[i];
+			}
+
+			i++;
+		}
+
+		//must be same, so smaller one
+		return a.genomeName.size() < b.genomeName.size();
+	}
+
+	return a.percentMatch > b.percentMatch;
 }
 
 //******************** GenomeMatcher functions ********************************
