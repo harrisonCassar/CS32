@@ -93,6 +93,13 @@ bool GenomeImpl::load(istream& genomeSource, vector<Genome>& genomes)
 					break;
 			}
 
+			c = toupper(c);
+
+			if (c == 'A' || c == 'C' || c == 'G' || c == 'T' || c == 'N')
+				sequence += c;
+			else
+				return false;
+
 			for (;;) //repeat loop on each character in line of gene
 			{
 				if (!genomeSource.get(c))

@@ -209,13 +209,21 @@ bool GenomeMatcherImpl::findRelatedGenomes(const Genome& query, int fragmentMatc
 bool compareGenomeMatches(GenomeMatch a, GenomeMatch b)
 {
 	//alphabetical ordering, where lowercase characters are embedded in alphabetical order: a > A > b > B...
+	//a > b > c > .... > A > B > C > ...
+
+	//if (a.percentMatch == b.percentMatch)
+		//return a.genomeName > b.genomeName;
+
 	if (a.percentMatch == b.percentMatch)
 	{
 		unsigned int i = 0;
 		while (i < a.genomeName.size() && i < b.genomeName.size())
 		{
 			if (a.genomeName[i] == b.genomeName[i])
+			{
+				i++;
 				continue;
+			}
 
 			if (islower(a.genomeName[i]))
 			{
@@ -236,8 +244,6 @@ bool compareGenomeMatches(GenomeMatch a, GenomeMatch b)
 
 				return tolower(a.genomeName[i]) < b.genomeName[i];
 			}
-
-			i++;
 		}
 
 		//must be same, so smaller one
