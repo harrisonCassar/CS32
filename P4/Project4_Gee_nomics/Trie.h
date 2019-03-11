@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+using namespace std;
 
 template<typename ValueType>
 class Trie
@@ -11,8 +12,8 @@ public:
 	Trie();
 	~Trie();
 	void reset();
-	void insert(const std::string& key, const ValueType& value);
-	std::vector<ValueType> find(const std::string& key, bool exactMatchOnly) const;
+	void insert(const string& key, const ValueType& value);
+	vector<ValueType> find(const string& key, bool exactMatchOnly) const;
 
 	// C++11 syntax for preventing copying and assignment
 	Trie(const Trie&) = delete;
@@ -24,8 +25,8 @@ private:
 	{
 		//holds values
 		//holds vector of children
-		std::vector<ValueType> values;
-		std::vector<ChildNodePtr> children;
+		vector<ValueType> values;
+		vector<ChildNodePtr> children;
 	};
 
 	struct ChildNodePtr
@@ -37,8 +38,8 @@ private:
 	};
 
 	void destructAllChildren(Node* cur);
-	Node* findChild(Node* parent, char label);
-	std::vector<ValueType> findHelper(Node* child, const std::string& key, int index, int alterationDegree);
+	Node* findChild(Node* parent, char label) const;
+	vector<ValueType> findHelper(Node* child, const string& key, int index, int alterationDegree) const;
 
 	Node* m_root;
 };
@@ -59,7 +60,7 @@ Trie<ValueType>::~Trie()
 template<typename ValueType>
 void Trie<ValueType>::destructAllChildren(Node* cur)
 {
-	std::vector<ChildNodePtr>::iterator it = cur->children.begin();
+	typename vector<ChildNodePtr>::iterator it = cur->children.begin();
 
 	//if children vector is empty, it will skip these recursive calls
 	while (it != cur->children.end())
@@ -80,11 +81,11 @@ void Trie<ValueType>::reset()
 }
 
 template<typename ValueType>
-void Trie<ValueType>::insert(const std::string& key, const ValueType& value)
+void Trie<ValueType>::insert(const string& key, const ValueType& value)
 {
 	Node* cur = m_root;
 
-	for (int i = 0; i < key.size(); i++)
+	for (unsigned int i = 0; i < key.size(); i++)
 	{
 		Node* next = findChild(cur,key[i]);
 		if (next != nullptr) //found child
@@ -95,7 +96,7 @@ void Trie<ValueType>::insert(const std::string& key, const ValueType& value)
 		{
 			ChildNodePtr temp = { key[i], new Node };
 			cur->children.push_back(temp);
-			cur = cur->temp.child;
+			cur = temp.child;
 		}
 	}
 
@@ -103,12 +104,12 @@ void Trie<ValueType>::insert(const std::string& key, const ValueType& value)
 }
 
 template<typename ValueType>
-Trie<ValueType>::Node* Trie<ValueType>::findChild(Node* parent, char label)
+typename Trie<ValueType>::Node* Trie<ValueType>::findChild(Node* parent, char label) const
 {
 	if (parent->children.empty())
 		return nullptr;
 
-	for (std::vector<ChildNodePtr>::iterator it = parent->children.begin(); it != parent->children.end(); it++)
+	for (typename vector<ChildNodePtr>::iterator it = parent->children.begin(); it != parent->children.end(); it++)
 	{
 		if (it->label == label)
 			return it->child;
@@ -118,14 +119,15 @@ Trie<ValueType>::Node* Trie<ValueType>::findChild(Node* parent, char label)
 }
 
 template<typename ValueType>
-std::vector<ValueType> Trie<ValueType>::find(const std::string& key, bool exactMatchOnly) const
+vector<ValueType> Trie<ValueType>::find(const string& key, bool exactMatchOnly) const
 {
 	Node* child = nullptr;
 
-	for (std::vector<ValueType>::iterator it = m_root->children.begin(); it != cur->children.end(); it++)
+	//for (vector<ValueType>::iterator it = m_root->children.begin(); it != m_root->children.end(); it++)
+	for (unsigned int i = 0; i < m_root->children.size(); i++)
 	{
-		if (it->label == key[0])
-			child = it->child;
+		if (m_root->children[i].label == key[0])
+			child = m_root->children[i].child;
 	}
 
 	if (exactMatchOnly)
@@ -135,11 +137,11 @@ std::vector<ValueType> Trie<ValueType>::find(const std::string& key, bool exactM
 }
 
 template <typename ValueType>
-std::vector<ValueType> Trie<ValueType>::findHelper(Node* cur, const std::string& key, int index, int alterationDegree)
+vector<ValueType> Trie<ValueType>::findHelper(Node* cur, const string& key, int index, int alterationDegree) const
 {
 	if (cur == nullptr)
 	{
-		std::vector<ValueType> temp;
+		vector<ValueType> temp;
 		return temp;
 	}
 
@@ -148,24 +150,24 @@ std::vector<ValueType> Trie<ValueType>::findHelper(Node* cur, const std::string&
 
 	Node* child = findChild(cur, key[index]);
 
-	std::vector<ValueType> associatedValues;
+	vector<ValueType> associatedValues;
 
 	if (alterationDegree != 0)
 	{
-		for (std::vector<ValueType>::iterator it = cur->children.begin(); it != cur->children.end(); it++)
+		for (unsigned int i = 0; i < cur->children.size(); i++)
 		{
-			if (it->child == child)
+			if (cur->children[i].child == child)
 				continue;
 
 			//add each other child to associated values
-			std::vector<ValueType> temp = findHelper(it->child, key, index + 1, alterationDegree - 1);
+			vector<ValueType> temp = findHelper(cur->children[i].child, key, index + 1, alterationDegree - 1);
 			associatedValues.insert(associatedValues.begin(), temp.begin(), temp.end());
 		}
 	}
 	
 	if (child != nullptr)
 	{
-		std::vector<ValueType> temp = findHelper(child, key, index + 1, alterationDegree);
+		vector<ValueType> temp = findHelper(child, key, index + 1, alterationDegree);
 		associatedValues.insert(associatedValues.begin(), temp.begin(), temp.end());
 	}
 

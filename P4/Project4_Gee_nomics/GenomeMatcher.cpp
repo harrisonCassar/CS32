@@ -9,6 +9,8 @@
 #include <fstream>
 using namespace std;
 
+bool compareGenomeMatches(GenomeMatch a, GenomeMatch b);
+
 class GenomeMatcherImpl
 {
 public:
@@ -52,6 +54,7 @@ void GenomeMatcherImpl::addGenome(const Genome& genome)
 
 		Pair temp = { m_curGenomeNum, i };
 
+		cerr << "Inserting fragment: \"" << fragment << "\" for Genome #" << m_curGenomeNum << " at position " << i << endl;
 		m_data.insert(fragment,temp);
 	}
 }
@@ -63,7 +66,9 @@ int GenomeMatcherImpl::minimumSearchLength() const
 
 bool GenomeMatcherImpl::findGenomesWithThisDNA(const string& fragment, int minimumLength, bool exactMatchOnly, vector<DNAMatch>& matches) const
 {
-	if (minimumLength < minimumSearchLength() || fragment.size() < minimumLength)
+	if (minimumLength < 0)
+		return false;
+	if (minimumLength < minimumSearchLength() || fragment.size() < (unsigned int)minimumLength)
 		return false;
 
 	bool foundMatch = false;
@@ -162,8 +167,8 @@ bool GenomeMatcherImpl::findRelatedGenomes(const Genome& query, int fragmentMatc
 	map<string, int> matchesFound;
 
 	//intialize all currently-added genomes to zero
-	for (int i = 0; i < m_genomes.size(); i++)
-		matchesFound[m_genomes[i].name] = 0;
+	for (unsigned int i = 0; i < m_genomes.size(); i++)
+		matchesFound[m_genomes[i].name()] = 0;
 
 	for (int i = 0; i*fragmentMatchLength < query.length(); i++)
 	{

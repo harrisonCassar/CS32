@@ -70,6 +70,8 @@ bool GenomeImpl::load(istream& genomeSource, vector<Genome>& genomes)
 
 			if (c == '\n')
 			{
+				return false;
+				/*
 				if (!genomeSource.get(c))
 				{
 					if (firstLineOfGene)
@@ -80,8 +82,9 @@ bool GenomeImpl::load(istream& genomeSource, vector<Genome>& genomes)
 				}
 				else
 					return false;
+					*/
 			}
-
+		
 			if (c == '>')
 			{
 				if (firstLineOfGene)
@@ -97,7 +100,9 @@ bool GenomeImpl::load(istream& genomeSource, vector<Genome>& genomes)
 					endOfFile = true;
 					break;
 				}
-
+				
+				characterCount++;
+				
 				c = toupper(c);
 
 				if (c == 'A' || c == 'C' || c == 'G' || c == 'T' || c == 'N')
@@ -109,12 +114,14 @@ bool GenomeImpl::load(istream& genomeSource, vector<Genome>& genomes)
 			}
 
 			//check for valid characterCount
+			cerr << "checking for character count: " << characterCount << endl;
 			if (characterCount <= 0 && characterCount > 80)
 				return false;
 
 			firstLineOfGene = false;
 		}
 
+		cerr << "adding new genome to genomes vector! name: " << name << ", and sequence: " << sequence << endl;
 		Genome temp(name, sequence);
 		genomes.push_back(temp);
 	}
@@ -132,6 +139,8 @@ bool GenomeImpl::load(istream& genomeSource, vector<Genome>& genomes)
 			//if end of line, check characterCount is > 0 and <= 80, and then repeat line loop if its not (return false if it is, as bad formatting)
 		//create Genome with sequence and name
 		//push back new Genome to 'genomes' vector
+
+	cerr << "genomes in function empty check: " << genomes.empty() << endl;
 
 	return true;
 }
