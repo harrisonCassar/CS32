@@ -1,9 +1,2 @@
-﻿  Genome.cpp
-  GenomeMatcher.cpp
-  main.cpp
-d:\github\cs32\p4\project4_gee_nomics\main.cpp(231): warning C4018: '<': signed/unsigned mismatch
-d:\github\cs32\p4\project4_gee_nomics\main.cpp(240): warning C4018: '>': signed/unsigned mismatch
-d:\github\cs32\p4\project4_gee_nomics\main.cpp(294): warning C4018: '<': signed/unsigned mismatch
-  Generating Code...
-  LINK : D:\GitHub\CS32\P4\Project4_Gee_nomics\Debug\Project4_Gee_nomics.exe not found or not built by the last incremental link; performing full link
+﻿  GenomeMatcher.cpp
   Project4_Gee_nomics.vcxproj -> D:\GitHub\CS32\P4\Project4_Gee_nomics\Debug\Project4_Gee_nomics.exe

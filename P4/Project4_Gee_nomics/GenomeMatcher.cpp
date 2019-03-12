@@ -66,6 +66,8 @@ int GenomeMatcherImpl::minimumSearchLength() const
 
 bool GenomeMatcherImpl::findGenomesWithThisDNA(const string& fragment, int minimumLength, bool exactMatchOnly, vector<DNAMatch>& matches) const
 {
+	matches.clear();
+	
 	if (minimumLength < 0)
 		return false;
 	if (minimumLength < minimumSearchLength() || fragment.size() < (unsigned int)minimumLength)
@@ -73,7 +75,6 @@ bool GenomeMatcherImpl::findGenomesWithThisDNA(const string& fragment, int minim
 
 	bool foundMatch = false;
 
-	matches.clear();
 	map<string, DNAMatch> maxLengthGenomeMatch;
 
 	vector<Pair> potentialMatches = m_data.find(fragment.substr(0, minimumSearchLength()), exactMatchOnly);
@@ -87,7 +88,7 @@ bool GenomeMatcherImpl::findGenomesWithThisDNA(const string& fragment, int minim
 		//try to extract largest possible substr that still is >= to minimum match length
 		for (int i = fragment.size(); !successfulExtraction && i >= minimumLength; i--)
 		{
-			if (m_genomes[it->genomeNum].extract(it->position, i, extraction))
+			if (m_genomes[it->genomeNum-1].extract(it->position, i, extraction))
 				successfulExtraction = true;
 		}
 
@@ -119,7 +120,7 @@ bool GenomeMatcherImpl::findGenomesWithThisDNA(const string& fragment, int minim
 		//if valid length for a match, then check if it is greater than previous DNA match for that Genome
 		if (candidateLength >= minimumLength)
 		{
-			map<string, DNAMatch>::iterator itmap = maxLengthGenomeMatch.find(m_genomes[it->genomeNum].name());
+			map<string, DNAMatch>::iterator itmap = maxLengthGenomeMatch.find(m_genomes[it->genomeNum-1].name());
 			if (itmap != maxLengthGenomeMatch.end())
 			{
 				//check if candidate is strictly greater than mapped current value; replace if yes
@@ -136,7 +137,7 @@ bool GenomeMatcherImpl::findGenomesWithThisDNA(const string& fragment, int minim
 			}
 			else
 			{
-				DNAMatch temp = { m_genomes[it->genomeNum].name(),candidateLength,it->position };
+				DNAMatch temp = { m_genomes[it->genomeNum-1].name(),candidateLength,it->position };
 				maxLengthGenomeMatch[temp.genomeName] = temp;
 			}
 
