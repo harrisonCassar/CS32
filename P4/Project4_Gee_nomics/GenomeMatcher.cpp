@@ -54,7 +54,7 @@ void GenomeMatcherImpl::addGenome(const Genome& genome)
 
 		Pair temp = { m_curGenomeNum, i };
 
-		cerr << "Inserting fragment: \"" << fragment << "\" for Genome #" << m_curGenomeNum << " at position " << i << endl;
+		//cerr << "Inserting fragment: \"" << fragment << "\" for Genome #" << m_curGenomeNum << " at position " << i << endl;
 		m_data.insert(fragment,temp);
 	}
 }

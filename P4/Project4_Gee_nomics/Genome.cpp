@@ -121,14 +121,14 @@ bool GenomeImpl::load(istream& genomeSource, vector<Genome>& genomes)
 			}
 
 			//check for valid characterCount
-			cerr << "checking for character count: " << characterCount << endl;
+			//cerr << "checking for character count: " << characterCount << endl;
 			if (characterCount <= 0 && characterCount > 80)
 				return false;
 
 			firstLineOfGene = false;
 		}
 
-		cerr << "adding new genome to genomes vector! name: " << name << ", and sequence: " << sequence << endl;
+		//cerr << "adding new genome to genomes vector! name: " << name << ", and sequence: " << sequence << endl;
 		Genome temp(name, sequence);
 		genomes.push_back(temp);
 	}
