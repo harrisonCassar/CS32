@@ -1,4 +1,9 @@
 ﻿  Genome.cpp
+  GenomeMatcher.cpp
+  main.cpp
+d:\github\cs32\p4\project4_gee_nomics\main.cpp(250): warning C4018: '<': signed/unsigned mismatch
+d:\github\cs32\p4\project4_gee_nomics\main.cpp(259): warning C4018: '>': signed/unsigned mismatch
+d:\github\cs32\p4\project4_gee_nomics\main.cpp(313): warning C4018: '<': signed/unsigned mismatch
   Generating code
   0 of 983 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation

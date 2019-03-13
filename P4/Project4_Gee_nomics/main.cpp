@@ -1,4 +1,5 @@
-/*#include <iostream>
+/*
+#include <iostream>
 #include <cassert>
 #include <fstream>
 #include "provided.h";
@@ -87,15 +88,209 @@ int main()
 	temp_matcher.addGenome(temp3);
 
 	//test 1 expected output:
-	Inserting fragment: "ACT" for Genome #1 at position 0
-	Inserting fragment: "CTG" for Genome #1 at position 1
-	Inserting fragment: "TCG" for Genome #2 at position 0
-	Inserting fragment: "CGA" for Genome #2 at position 1
-	Inserting fragment: "GAC" for Genome #2 at position 2
-	Inserting fragment: "ACT" for Genome #2 at position 3
-	Inserting fragment: "TCT" for Genome #3 at position 0
-	Inserting fragment: "CTC" for Genome #3 at position 1
-	Inserting fragment: "TCG" for Genome #3 at position 2
+	//Inserting fragment: "ACT" for Genome #1 at position 0
+	//Inserting fragment: "CTG" for Genome #1 at position 1
+	//Inserting fragment: "TCG" for Genome #2 at position 0
+	//Inserting fragment: "CGA" for Genome #2 at position 1
+	//Inserting fragment: "GAC" for Genome #2 at position 2
+	//Inserting fragment: "ACT" for Genome #2 at position 3
+	//Inserting fragment: "TCT" for Genome #3 at position 0
+	//Inserting fragment: "CTC" for Genome #3 at position 1
+	//Inserting fragment: "TCG" for Genome #3 at position 2
+
+	GenomeMatcher specTest(4);
+	Genome genome1("Genome 1", "CGGTGTACNACGACTGGGGATAGAATATCTTGACGTCGTACCGGTTGTAGTCGTTCGACCGAAGGGTTCCGCGCCAGTAC");
+	Genome genome2("Genome 2", "TAACAGAGCGGTNATATTGTTACGAATCACGTGCGAGACTTAGAGCCAGAATATGAAGTAGTGATTCAGCAACCAAGCGG");
+	Genome genome3("Genome 3", "TTTTGAGCCAGCGACGCGGCTTGCTTAACGAAGCGGAAGAGTAGGTTGGACACATTNGGCGGCACAGCGCTTTTGAGCCA");
+
+	specTest.addGenome(genome1);
+	specTest.addGenome(genome2);
+	specTest.addGenome(genome3);
+
+	std::vector<DNAMatch> matches;
+	bool result;
+
+	//=======================================================
+	result = specTest.findGenomesWithThisDNA("GAAG", 4, true, matches);
+
+	cerr << "result: ";
+	if (result)
+		cerr << "true";
+	else
+		cerr << "false";
+
+	cerr << "; matches:" << endl;
+
+	for (std::vector<DNAMatch>::iterator itt = matches.begin(); itt != matches.end(); itt++)
+	{
+		cerr << itt->genomeName << " of length " << itt->length << " at position " << itt->position << endl;
+	}
+	//======================================================
+	result = specTest.findGenomesWithThisDNA("GAATAC", 4, true, matches);
+
+	cerr << "result: ";
+	if (result)
+		cerr << "true";
+	else
+		cerr << "false";
+
+	cerr << "; matches:" << endl;
+
+	for (std::vector<DNAMatch>::iterator itt = matches.begin(); itt != matches.end(); itt++)
+	{
+		cerr << itt->genomeName << " of length " << itt->length << " at position " << itt->position << endl;
+	}
+	//======================================================
+	result = specTest.findGenomesWithThisDNA("GAATAC", 6, true, matches);
+
+	cerr << "result: ";
+	if (result)
+		cerr << "true";
+	else
+		cerr << "false";
+
+	cerr << "; matches:" << endl;
+
+	for (std::vector<DNAMatch>::iterator itt = matches.begin(); itt != matches.end(); itt++)
+	{
+		cerr << itt->genomeName << " of length " << itt->length << " at position " << itt->position << endl;
+	}
+	//======================================================
+	result = specTest.findGenomesWithThisDNA("GAATAC", 6, false, matches);
+
+	cerr << "result: ";
+	if (result)
+		cerr << "true";
+	else
+		cerr << "false";
+
+	cerr << "; matches:" << endl;
+
+	for (std::vector<DNAMatch>::iterator itt = matches.begin(); itt != matches.end(); itt++)
+	{
+		cerr << itt->genomeName << " of length " << itt->length << " at position " << itt->position << endl;
+	}
+	//======================================================
+	result = specTest.findGenomesWithThisDNA("GTATAT", 6, false, matches);
+
+	cerr << "result: ";
+	if (result)
+		cerr << "true";
+	else
+		cerr << "false";
+
+	cerr << "; matches:" << endl;
+
+	for (std::vector<DNAMatch>::iterator itt = matches.begin(); itt != matches.end(); itt++)
+	{
+		cerr << itt->genomeName << " of length " << itt->length << " at position " << itt->position << endl;
+	}
+	//======================================================
+	result = specTest.findGenomesWithThisDNA("GAATACG", 6, false, matches);
+
+	cerr << "result: ";
+	if (result)
+		cerr << "true";
+	else
+		cerr << "false";
+
+	cerr << "; matches:" << endl;
+
+	for (std::vector<DNAMatch>::iterator itt = matches.begin(); itt != matches.end(); itt++)
+	{
+		cerr << itt->genomeName << " of length " << itt->length << " at position " << itt->position << endl;
+	}
+	//======================================================
+	result = specTest.findGenomesWithThisDNA("GAAGGGTT", 5, false, matches);
+
+	cerr << "result: ";
+	if (result)
+		cerr << "true";
+	else
+		cerr << "false";
+
+	cerr << "; matches:" << endl;
+
+	for (std::vector<DNAMatch>::iterator itt = matches.begin(); itt != matches.end(); itt++)
+	{
+		cerr << itt->genomeName << " of length " << itt->length << " at position " << itt->position << endl;
+	}
+	//======================================================
+	result = specTest.findGenomesWithThisDNA("GAAGGGTT", 6, false, matches);
+
+	cerr << "result: ";
+	if (result)
+		cerr << "true";
+	else
+		cerr << "false";
+
+	cerr << "; matches:" << endl;
+
+	for (std::vector<DNAMatch>::iterator itt = matches.begin(); itt != matches.end(); itt++)
+	{
+		cerr << itt->genomeName << " of length " << itt->length << " at position " << itt->position << endl;
+	}
+	//======================================================
+	result = specTest.findGenomesWithThisDNA("ACGTGCGAGACTTAGAGCC", 12, false, matches);
+
+	cerr << "result: ";
+	if (result)
+		cerr << "true";
+	else
+		cerr << "false";
+
+	cerr << "; matches:" << endl;
+
+	for (std::vector<DNAMatch>::iterator itt = matches.begin(); itt != matches.end(); itt++)
+	{
+		cerr << itt->genomeName << " of length " << itt->length << " at position " << itt->position << endl;
+	}
+	//======================================================
+	result = specTest.findGenomesWithThisDNA("ACGTGCGAGACTTAGAGCG", 12, false, matches);
+
+	cerr << "result: ";
+	if (result)
+		cerr << "true";
+	else
+		cerr << "false";
+
+	cerr << "; matches:" << endl;
+
+	for (std::vector<DNAMatch>::iterator itt = matches.begin(); itt != matches.end(); itt++)
+	{
+		cerr << itt->genomeName << " of length " << itt->length << " at position " << itt->position << endl;
+	}
+	//======================================================
+	result = specTest.findGenomesWithThisDNA("GAAG", 3, true, matches);
+
+	cerr << "result: ";
+	if (result)
+		cerr << "true";
+	else
+		cerr << "false";
+
+	cerr << "; matches:" << endl;
+
+	for (std::vector<DNAMatch>::iterator itt = matches.begin(); itt != matches.end(); itt++)
+	{
+		cerr << itt->genomeName << " of length " << itt->length << " at position " << itt->position << endl;
+	}
+	//======================================================
+	result = specTest.findGenomesWithThisDNA("GAAG", 5, true, matches);
+
+	cerr << "result: ";
+	if (result)
+		cerr << "true";
+	else
+		cerr << "false";
+
+	cerr << "; matches:" << endl;
+
+	for (std::vector<DNAMatch>::iterator itt = matches.begin(); itt != matches.end(); itt++)
+	{
+		cerr << itt->genomeName << " of length " << itt->length << " at position " << itt->position << endl;
+	}
+	//======================================================
 
 	return 0;
 }
