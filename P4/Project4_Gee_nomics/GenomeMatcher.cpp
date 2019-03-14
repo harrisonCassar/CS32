@@ -161,7 +161,7 @@ bool GenomeMatcherImpl::findRelatedGenomes(const Genome& query, int fragmentMatc
 		return false;
 
 	int numOfSequences = query.length() / fragmentMatchLength;
-
+	cerr << numOfSequences << endl;
 	results.clear();
 
 	//running record of number of matches found for each named genome
@@ -174,8 +174,7 @@ bool GenomeMatcherImpl::findRelatedGenomes(const Genome& query, int fragmentMatc
 	for (int i = 0; i*fragmentMatchLength < query.length(); i++)
 	{
 		string extraction = "";
-		query.extract(i, fragmentMatchLength, extraction);
-
+		query.extract(i*fragmentMatchLength, fragmentMatchLength, extraction);
 		vector<DNAMatch> matches;
 		if (findGenomesWithThisDNA(extraction, fragmentMatchLength, exactMatchOnly, matches))
 		{
@@ -189,7 +188,7 @@ bool GenomeMatcherImpl::findRelatedGenomes(const Genome& query, int fragmentMatc
 		if (itmap->second == 0)
 			continue;
 
-		double p = itmap->second / double(numOfSequences);
+		double p = (itmap->second / double(numOfSequences))*100;
 
 		if (p > matchPercentThreshold)
 		{

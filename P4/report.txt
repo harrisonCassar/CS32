@@ -1,0 +1,47 @@
+/****************************************************************************
+	Harrison Cassar
+	ID: 505114980
+	Discussion 1C
+	TA: Hackett, T.R.
+
+	Report for Project 4 for CS32 with Professor Carey Nachenberg
+
+	Last Edit: 3/13/2018
+
+****************************************************************************/
+
+1. None of my classes' implementations have any known bugs/problems.
+
+2. Each and every one of my implementations for the various methods satisfies the big-O requirements given within the specification.
+
+3. High-level pseudocode for two of my methods:
+	-Trie's find() method: The find() method essentially works by calling a recursive helper function called "findHelper()":
+		-get child of root pointer that corresponds to first of the sequence
+		-if exactMatchOnly is true, return findHelper function with alterationDegree set to 0 (meaning allowing 0 alterations in the sequence)
+		-else, return findHelper function with alterationDegree set to 1 (meaning allowing still 1 alteration in sequence)
+		
+		-findHelper() pseudocode:
+			-check if passed in nullptr (base case)
+				-return empty vector
+			-check if reached last node
+				-return value(s) at that node
+			-if a child has the same label as the next letter in the sequence fragment
+				-pass in that child into recursive call with simplifying step of moving one letter later in sequence
+				-add returned values to associatedValues vector to be returned later
+			-if alterationDegree is greater than 0
+				-pass in every other child (if any) into recursive call with alterationDegree as 1 less
+				-add all returned values to associatedValues vector to be returned later
+			-return associatedValues vector
+
+	-GenomeMatcher's findGenomesWithThisDNA() method:
+		-clear passed in matches vector
+		-check if valid passed-in minimumLength
+		-call Trie.find() method to get all potential matches (and store into vector)
+		-iterate through potential matches vector:
+			-attempt extraction of full fragment (beyond what was used to search in Trie)
+				-if unsuccessful, move onto next potential match
+				-if successful:
+					-iterate through extraction, checking for valid match length with full inputted fragment (and allowing one alteration per extraction from fragment if SNiPS are allowed)
+						-if valid match, check record if it is a longer match than all past matches of that genome, updating record if it is
+
+		
