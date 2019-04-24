@@ -161,7 +161,7 @@ bool GenomeMatcherImpl::findRelatedGenomes(const Genome& query, int fragmentMatc
 		return false;
 
 	int numOfSequences = query.length() / fragmentMatchLength;
-	cerr << numOfSequences << endl;
+	
 	results.clear();
 
 	//running record of number of matches found for each named genome
@@ -217,37 +217,61 @@ bool compareGenomeMatches(GenomeMatch a, GenomeMatch b)
 	if (a.percentMatch == b.percentMatch)
 	{
 		unsigned int i = 0;
-		while (i < a.genomeName.size() && i < b.genomeName.size())
+		unsigned int j = 0;
+		bool aEndedFirst = false;
+		while (true)
 		{
-			if (a.genomeName[i] == b.genomeName[i])
+			if (i >= a.genomeName.size())
+			{
+				aEndedFirst = true;
+				break;
+			}
+			else if (j >= b.genomeName.size())
+			{
+				aEndedFirst = false;
+				break;
+			}
+
+			if (!isalpha(a.genomeName[i]))
 			{
 				i++;
+				continue;
+			}
+			if (!isalpha(b.genomeName[j]))
+			{
+				j++;
+				continue;
+			}
+			if (a.genomeName[i] == b.genomeName[j])
+			{
+				i++;
+				j++;
 				continue;
 			}
 
 			if (islower(a.genomeName[i]))
 			{
-				if (islower(b.genomeName[i]))
-					return a.genomeName[i] < b.genomeName[i];
-				if (toupper(a.genomeName[i]) == b.genomeName[i])
+				if (islower(b.genomeName[j]))
+					return a.genomeName[i] < b.genomeName[j];
+				if (toupper(a.genomeName[i]) == b.genomeName[j])
 					return true;
 
-				return toupper(a.genomeName[i]) < b.genomeName[i];
+				return toupper(a.genomeName[i]) < b.genomeName[j];
 			}
 
 			if (isupper(a.genomeName[i]))
 			{
-				if (isupper(b.genomeName[i]))
-					return a.genomeName[i] < b.genomeName[i];
-				if (tolower(a.genomeName[i]) == b.genomeName[i])
+				if (isupper(b.genomeName[j]))
+					return a.genomeName[i] < b.genomeName[j];
+				if (tolower(a.genomeName[i]) == b.genomeName[j])
 					return false;
 
-				return tolower(a.genomeName[i]) < b.genomeName[i];
+				return tolower(a.genomeName[i]) < b.genomeName[j];
 			}
 		}
 
 		//must be same, so smaller one
-		return a.genomeName.size() < b.genomeName.size();
+		return aEndedFirst;
 	}
 
 	return a.percentMatch > b.percentMatch;
